@@ -3,14 +3,6 @@
 require_relative "gem_skills/cli/gem_command"
 Gem::CommandManager.instance.register_command :skill
 
-# ---------------------------------------------------------------------------
-# gem install GEM_NAME --with-skill
-#
-# Collects each installed gem spec in a post_install hook, then generates
-# all skills concurrently in a single at_exit batch after RubyGems finishes
-# installing everything. This avoids blocking each gem install while a skill
-# is generated sequentially.
-# ---------------------------------------------------------------------------
 require "rubygems/commands/install_command"
 require "tty-spinner"
 
@@ -45,7 +37,9 @@ module GemSkills
         output: $stderr
       )
 
-      threads = @pending_skills.map do |name:, version:|
+      threads = @pending_skills.map do |gem_info|
+        name    = gem_info[:name]
+        version = gem_info[:version]
         sp = multi.register("  [:spinner] :title", title: "#{name} #{version}")
         Thread.new(name, version, sp) { |n, v, spinner| generate_one_skill(n, v, spinner) }
       end
