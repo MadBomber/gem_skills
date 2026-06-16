@@ -3,6 +3,7 @@
 require "rubygems/command"
 require "fileutils"
 require "json"
+require "tty-spinner"
 require "gem_skills"
 
 # Registered as `gem skill` via lib/rubygems_plugin.rb.
@@ -69,36 +70,40 @@ class Gem::Commands::SkillCommand < Gem::Command
     force = options[:force]
     model = options[:model] || GemSkills::Generator::DEFAULT_MODEL
 
-    gem_names.each { |name| install_one(name, force: force, model: model) }
+    multi = TTY::Spinner::Multi.new(
+      "[:spinner] Generating skills (#{model})",
+      format: :dots,
+      output: $stderr
+    )
+
+    threads = gem_names.map do |gem_name|
+      spinner = multi.register("  [:spinner] :title", title: gem_name)
+      Thread.new(gem_name, spinner) { |name, sp| install_one(name, spinner: sp, force: force, model: model) }
+    end
+    threads.each(&:join)
 
     say "Tip: run 'bundle plugin install gem_skills' to enable 'bundle skill'."
   end
 
-  def install_one(gem_name, force:, model:)
-    version = resolve_installed_version(gem_name)
+  def install_one(gem_name, spinner:, force:, model:)
+    spinner.auto_spin
 
+    version = resolve_installed_version(gem_name)
     if version.nil?
-      say "gem '#{gem_name}' is not installed locally. Installing..."
+      spinner.update(title: "#{gem_name} (installing...)")
       version = install_gem(gem_name)
     end
 
     if GemSkills::Cache.cached?(gem_name, version) && !force
-      say "Already cached: #{GemSkills::Cache.skill_path(gem_name, version)}"
-      say "Use --force to regenerate."
+      spinner.success("already cached")
       return
     end
 
-    say "Generating skill for #{gem_name} #{version} (#{model})..."
-    say "-" * 60
-
-    generator = GemSkills::Generator.new(gem_name, version, model: model)
-    generator.generate(force: force) { |chunk| print chunk; $stdout.flush }
-
-    say ""
-    say "-" * 60
-    say "Cached: #{GemSkills::Cache.skill_path(gem_name, version)}"
-    say ""
-  rescue GemSkills::Error => e
+    spinner.update(title: "#{gem_name} #{version}")
+    GemSkills::Generator.new(gem_name, version, model: model).generate(force: force)
+    spinner.success("done")
+  rescue => e
+    spinner.error("#{gem_name} failed")
     alert_error "#{gem_name}: #{e.message}"
   end
 

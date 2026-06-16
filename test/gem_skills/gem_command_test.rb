@@ -54,8 +54,6 @@ class GemCommandTest < Minitest::Test
       end
     end
     assert_includes generated, "new_gem"
-    assert_match "not installed", @output.string
-    assert_match "Cached", @output.string
   end
 
   def test_install_reports_error_when_auto_install_fails
@@ -68,14 +66,14 @@ class GemCommandTest < Minitest::Test
     assert_match "Could not install", @errors.string
   end
 
-  def test_install_shows_already_cached_message
+  def test_install_skips_generation_when_already_cached
     pre_cache("my_gem", "1.0.0")
     set_args("my_gem")
+    generated = []
     @cmd.stub(:resolve_installed_version, "1.0.0") do
-      @cmd.send(:cmd_install)
+      stub_generator(generated) { @cmd.send(:cmd_install) }
     end
-    assert_match "Already cached", @output.string
-    assert_match "--force", @output.string
+    assert_empty generated
   end
 
   def test_install_generates_and_links_uncached_gem
@@ -85,7 +83,6 @@ class GemCommandTest < Minitest::Test
       stub_generator(generated) { @cmd.send(:cmd_install) }
     end
     assert_includes generated, "my_gem"
-    assert_match "Cached", @output.string
   end
 
   def test_install_multiple_gems
