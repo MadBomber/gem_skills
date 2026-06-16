@@ -40,7 +40,8 @@ module GemSkills
       threads = @pending_skills.map do |gem_info|
         name    = gem_info[:name]
         version = gem_info[:version]
-        sp = multi.register("  [:spinner] :title", title: "#{name} #{version}")
+        sp = multi.register("  [:spinner] :title")
+        sp.update(title: "#{name} #{version}")
         Thread.new(name, version, sp) { |n, v, spinner| generate_one_skill(n, v, spinner) }
       end
       threads.each(&:join)
