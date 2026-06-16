@@ -2,16 +2,16 @@
 
 require "fileutils"
 require "json"
-require "gem_skills"
+require "gem/skill"
 
-module GemSkills
+module Gem::Skill
   # Handles `bundle skill SUBCOMMAND` via Bundler's plugin API (plugins.rb).
   # Project-aware: reads Gemfile.lock and manages .claude/skills/ symlinks.
   module BundlerCommand
     SUBCOMMANDS = %w[install refresh list].freeze
 
     def self.run(args)
-      GemSkills.configure_llm!
+      Gem::Skill.configure_llm!
       opts, rest = parse_options(args)
       subcmd = rest.shift
 
@@ -22,7 +22,7 @@ module GemSkills
       when nil, "help", "--help"
         puts usage
       else
-        warn "gem_skills: unknown subcommand #{subcmd.inspect}"
+        warn "gem-skill: unknown subcommand #{subcmd.inspect}"
         warn usage
         exit 1
       end
@@ -56,7 +56,7 @@ module GemSkills
 
         Linker.link(gem_name, version)
         puts "  ✓"
-      rescue GemSkills::Error => e
+      rescue Gem::Skill::Error => e
         puts "  ✗ #{e.message}"
         errors << "#{gem_name} #{version}: #{e.message}"
       end
@@ -100,7 +100,7 @@ module GemSkills
 
         Linker.link(gem_name, version)
         puts "  ✓"
-      rescue GemSkills::Error => e
+      rescue Gem::Skill::Error => e
         puts "  ✗ #{e.message}"
         errors << "#{gem_name} #{version}: #{e.message}"
       end

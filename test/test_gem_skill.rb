@@ -2,12 +2,12 @@
 
 require "test_helper"
 
-class TestGemSkills < Minitest::Test
+class TestGemSkill < Minitest::Test
   def test_that_it_has_a_version_number
-    refute_nil ::GemSkills::VERSION
+    refute_nil ::Gem::Skill::VERSION
   end
 
   def test_cache_root_is_in_home_dir
-    assert_match(/\.gem_skills/, GemSkills::Cache::ROOT)
+    assert_match(%r{\.gem/skills}, Gem::Skill::Cache::ROOT)
   end
 end

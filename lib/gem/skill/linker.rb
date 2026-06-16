@@ -2,8 +2,8 @@
 
 require "fileutils"
 
-module GemSkills
-  # Manages .claude/skills/ symlinks in a project, pointing to ~/.gem_skills cache.
+module Gem::Skill
+  # Manages .claude/skills/ symlinks in a project, pointing to ~/.gem/skills cache.
   module Linker
     def self.skills_dir(project_root = Dir.pwd)
       File.join(project_root, ".claude", "skills")

@@ -4,7 +4,7 @@ require "net/http"
 require "uri"
 require "json"
 
-module GemSkills
+module Gem::Skill
   # Fetches documentation for a gem from multiple sources, in priority order:
   #   1. Local gem installation (Gem::Specification) — metadata + README + CHANGELOG + examples
   #   2. RubyGems API — metadata only, when gem isn't installed locally
@@ -197,7 +197,7 @@ module GemSkills
 
       response = Net::HTTP.start(uri.host, uri.port, use_ssl: true,
                                  open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT) do |http|
-        http.get(uri.request_uri, "User-Agent" => "gem_skills/#{GemSkills::VERSION}")
+        http.get(uri.request_uri, "User-Agent" => "gem-skill/#{Gem::Skill::VERSION}")
       end
 
       case response

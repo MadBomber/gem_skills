@@ -2,7 +2,7 @@
 
 require "test_helper"
 require "tmpdir"
-require "gem_skills/cli/bundle_command"
+require "gem/skill/cli/bundle_command"
 
 class BundlerCommandTest < Minitest::Test
   FAKE_GEMS = { "my_gem" => "1.0.0", "other_gem" => "2.1.0" }.freeze
@@ -46,7 +46,7 @@ class BundlerCommandTest < Minitest::Test
     pre_cache_gems
     stub_lockfile(FAKE_GEMS) do
       stub_linker do
-        GemSkills::BundlerCommand.install
+        Gem::Skill::BundlerCommand.install
       end
     end
     assert_match "skip", @output.string
@@ -56,10 +56,10 @@ class BundlerCommandTest < Minitest::Test
     generated = []
     stub_lockfile(FAKE_GEMS) do
       stub_linker do
-        GemSkills::Generator.stub(:new, ->(*args, **) {
+        Gem::Skill::Generator.stub(:new, ->(*args, **) {
           fake_gen(generated, args[0])
         }) do
-          GemSkills::BundlerCommand.install
+          Gem::Skill::BundlerCommand.install
         end
       end
     end
@@ -71,10 +71,10 @@ class BundlerCommandTest < Minitest::Test
     generated = []
     stub_lockfile(FAKE_GEMS) do
       stub_linker do
-        GemSkills::Generator.stub(:new, ->(*args, **) {
+        Gem::Skill::Generator.stub(:new, ->(*args, **) {
           fake_gen(generated, args[0])
         }) do
-          GemSkills::BundlerCommand.install(force: true)
+          Gem::Skill::BundlerCommand.install(force: true)
         end
       end
     end
@@ -85,11 +85,11 @@ class BundlerCommandTest < Minitest::Test
     stub_lockfile(FAKE_GEMS) do
       stub_linker do
         call_count = 0
-        GemSkills::Generator.stub(:new, ->(*args, **) {
+        Gem::Skill::Generator.stub(:new, ->(*args, **) {
           call_count += 1
           failing_gen(args[0])
         }) do
-          GemSkills::BundlerCommand.install
+          Gem::Skill::BundlerCommand.install
         end
       end
     end
@@ -103,7 +103,7 @@ class BundlerCommandTest < Minitest::Test
     pre_cache_gems
     stub_lockfile(FAKE_GEMS) do
       stub_linker(linked: FAKE_GEMS) do
-        GemSkills::BundlerCommand.refresh
+        Gem::Skill::BundlerCommand.refresh
       end
     end
     assert_match "ok", @output.string
@@ -114,8 +114,8 @@ class BundlerCommandTest < Minitest::Test
     stub_cache("my_gem", "1.0.0", "old skill")
     stub_lockfile({ "my_gem" => "1.1.0" }) do
       stub_linker(linked: { "my_gem" => "1.0.0" }) do
-        GemSkills::Generator.stub(:new, ->(*args, **) { fake_gen([], args[0]) }) do
-          GemSkills::BundlerCommand.refresh
+        Gem::Skill::Generator.stub(:new, ->(*args, **) { fake_gen([], args[0]) }) do
+          Gem::Skill::BundlerCommand.refresh
         end
       end
     end
@@ -126,7 +126,7 @@ class BundlerCommandTest < Minitest::Test
 
   def test_list_shows_linked_gems
     stub_linker(linked: FAKE_GEMS) do
-      GemSkills::BundlerCommand.list
+      Gem::Skill::BundlerCommand.list
     end
     assert_match "my_gem", @output.string
     assert_match "other_gem", @output.string
@@ -134,7 +134,7 @@ class BundlerCommandTest < Minitest::Test
 
   def test_list_shows_empty_message_when_none_linked
     stub_linker(linked: {}) do
-      GemSkills::BundlerCommand.list
+      Gem::Skill::BundlerCommand.list
     end
     assert_match "No skills linked", @output.string
   end
@@ -142,7 +142,7 @@ class BundlerCommandTest < Minitest::Test
   private
 
   def call_parse_options(args)
-    GemSkills::BundlerCommand.send(:parse_options, args)
+    Gem::Skill::BundlerCommand.send(:parse_options, args)
   end
 
   def pre_cache_gems
@@ -156,14 +156,14 @@ class BundlerCommandTest < Minitest::Test
   end
 
   def stub_lockfile(gems)
-    GemSkills::Lockfile.stub(:gems, gems) { yield }
+    Gem::Skill::Lockfile.stub(:gems, gems) { yield }
   end
 
   def stub_linker(linked: {})
     entries = linked.map { |name, ver| { gem_name: name, version: ver, valid: true } }
-    GemSkills::Linker.stub(:link,           ->(*) {}) do
-      GemSkills::Linker.stub(:prune_dead_links, ->(*) {}) do
-        GemSkills::Linker.stub(:linked_gems,    entries) do
+    Gem::Skill::Linker.stub(:link,           ->(*) {}) do
+      Gem::Skill::Linker.stub(:prune_dead_links, ->(*) {}) do
+        Gem::Skill::Linker.stub(:linked_gems,    entries) do
           yield
         end
       end
@@ -181,18 +181,18 @@ class BundlerCommandTest < Minitest::Test
 
   def failing_gen(gem_name)
     gen = Object.new
-    gen.define_singleton_method(:generate) { |**| raise GemSkills::Error, "no docs found" }
+    gen.define_singleton_method(:generate) { |**| raise Gem::Skill::Error, "no docs found" }
     gen
   end
 
   def stub_cache_root(dir)
-    @original_root = GemSkills::Cache::ROOT
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, dir)
+    @original_root = Gem::Skill::Cache::ROOT
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, dir)
   end
 
   def restore_cache_root
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, @original_root)
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, @original_root)
   end
 end

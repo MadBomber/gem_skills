@@ -4,11 +4,11 @@ require "fileutils"
 require "json"
 require "time"
 
-module GemSkills
-  # Manages the global ~/.gem_skills cache.
-  # Structure: ~/.gem_skills/<gem_name>/<version>/SKILL.md
+module Gem::Skill
+  # Manages the global ~/.gem/skills cache.
+  # Structure: ~/.gem/skill/<gem_name>/<version>/SKILL.md
   module Cache
-    ROOT = File.expand_path("~/.gem_skills").freeze
+    ROOT = File.expand_path("~/.gem/skills").freeze
 
     def self.root = ROOT
 

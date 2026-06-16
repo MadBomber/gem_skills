@@ -2,7 +2,7 @@
 
 require "ruby_llm"
 
-module GemSkills
+module Gem::Skill
   # Drives the LLM pipeline: fetches docs, generates a SKILL.md, caches it.
   class Generator
     DEFAULT_MODEL   = "gpt-5.5"

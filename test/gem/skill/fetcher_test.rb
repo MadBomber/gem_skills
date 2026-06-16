@@ -7,7 +7,7 @@ class FetcherTest < Minitest::Test
   def setup
     @gem_name = "chunker-ruby"
     @version  = "1.2.3"
-    @fetcher  = GemSkills::Fetcher.new(@gem_name, @version)
+    @fetcher  = Gem::Skill::Fetcher.new(@gem_name, @version)
   end
 
   # --- gem_dir / locate_gem_dir ---

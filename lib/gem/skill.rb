@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-require_relative "gem_skills/version"
-require_relative "gem_skills/cache"
-require_relative "gem_skills/fetcher"
-require_relative "gem_skills/generator"
-require_relative "gem_skills/linker"
-require_relative "gem_skills/lockfile"
+require_relative "skill/version"
+require_relative "skill/cache"
+require_relative "skill/fetcher"
+require_relative "skill/generator"
+require_relative "skill/linker"
+require_relative "skill/lockfile"
 
-module GemSkills
+module Gem::Skill
   class Error < StandardError; end
 
   ENV_KEY_MAP = {

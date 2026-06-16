@@ -26,27 +26,27 @@ class LockfileTest < Minitest::Test
   LOCKFILE
 
   def test_parse_extracts_direct_dependencies
-    gems = GemSkills::Lockfile.parse(SAMPLE_LOCKFILE)
+    gems = Gem::Skill::Lockfile.parse(SAMPLE_LOCKFILE)
     assert_equal "1.3.4", gems["debug_me"]
     assert_equal "1.2.0", gems["ruby_llm"]
     assert_equal "1.3.2", gems["thor"]
   end
 
   def test_parse_excludes_transitive_dependencies
-    gems = GemSkills::Lockfile.parse(SAMPLE_LOCKFILE)
+    gems = Gem::Skill::Lockfile.parse(SAMPLE_LOCKFILE)
     refute gems.key?("faraday")
     refute gems.key?("faraday-net_http")
   end
 
   def test_gems_raises_when_lockfile_missing
-    assert_raises(GemSkills::Error) do
-      GemSkills::Lockfile.gems("/nonexistent/Gemfile.lock")
+    assert_raises(Gem::Skill::Error) do
+      Gem::Skill::Lockfile.gems("/nonexistent/Gemfile.lock")
     end
   end
 
   def test_parse_with_real_lockfile
-    gems = GemSkills::Lockfile.gems(File.expand_path("../../Gemfile.lock", __dir__))
-    # Dev deps (irb, minitest, rake) are direct in DEPENDENCIES; gem_skills! is the path gem
+    gems = Gem::Skill::Lockfile.gems(File.expand_path("../../../Gemfile.lock", __dir__))
+    # Dev deps (irb, minitest, rake) are direct in DEPENDENCIES; gem-skill! is the path gem
     assert gems.key?("rake")
     assert gems.key?("minitest")
     refute gems.empty?

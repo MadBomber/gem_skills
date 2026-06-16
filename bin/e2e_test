@@ -1,0 +1,71 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# End-to-end test: fetch docs for a gem and generate a SKILL.md
+# Usage: bundle exec ruby bin/e2e_test [GEM_NAME [VERSION]]
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+require "gem/skill"
+require "ruby_llm"
+
+GEM_NAME = ARGV[0] || "zeitwerk"
+VERSION  = ARGV[1] || Gem::Specification.find_by_name(GEM_NAME)&.version&.to_s
+MODEL    = ARGV[2] || "gpt-4o-mini"
+
+abort "Gem '#{GEM_NAME}' not installed. Run: gem install #{GEM_NAME}" unless VERSION
+
+Gem::Skill.configure_llm!
+
+puts "=" * 60
+puts "gem-skill end-to-end test"
+puts "Gem:   #{GEM_NAME} #{VERSION}"
+puts "Model: #{MODEL}"
+puts "Cache: #{Gem::Skill::Cache.root}"
+puts "=" * 60
+puts ""
+
+# --- Phase 1: Fetch ---
+
+puts "[ FETCH ]"
+fetcher = Gem::Skill::Fetcher.new(GEM_NAME, VERSION)
+sources = fetcher.fetch_all
+
+if sources.empty?
+  abort "No sources found — nothing to generate from."
+end
+
+sources.each do |name, content|
+  puts "  %-12s %d chars" % [name, content.length]
+end
+puts ""
+
+# --- Phase 2: Generate ---
+
+puts "[ GENERATE ]  streaming output below"
+puts "-" * 60
+
+skill_content = ""
+generator = Gem::Skill::Generator.new(GEM_NAME, VERSION, model: MODEL)
+skill_content = generator.generate(force: true) do |chunk|
+  print chunk
+  $stdout.flush
+end
+
+puts ""
+puts "-" * 60
+puts ""
+
+# --- Phase 3: Verify cache ---
+
+puts "[ CACHE ]"
+cached_path = Gem::Skill::Cache.skill_path(GEM_NAME, VERSION)
+if File.exist?(cached_path)
+  puts "  Written: #{cached_path}"
+  puts "  Size:    #{File.size(cached_path)} bytes"
+else
+  puts "  ERROR: cache file not found at #{cached_path}"
+  exit 1
+end
+
+puts ""
+puts "Done."

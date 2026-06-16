@@ -1,4 +1,4 @@
-# gem_skills
+# gem-skill
 
 Generates Claude Code skill files from Ruby gem documentation and caches them
 globally so every project that uses a gem can share the same pre-built knowledge.
@@ -9,15 +9,15 @@ Every time Claude Code encounters a gem it hasn't seen in the current context, i
 re-reads the README, scans examples, and figures out the API. That costs tokens
 and time — and the result evaporates when the conversation ends.
 
-`gem_skills` runs that pipeline once, offline, and stores the output as a
-`SKILL.md` in `~/.gem_skills`. Projects symlink to the cached version, so Claude
+`gem-skill` runs that pipeline once, offline, and stores the output as a
+`SKILL.md` in `~/.gem/skills`. Projects symlink to the cached version, so Claude
 has accurate, version-specific knowledge about each gem without repeating the
 ingestion work.
 
 ## How the cache is laid out
 
 ```
-~/.gem_skills/
+~/.gem/skill/
 └── chunker-ruby/
     ├── 1.2.3/
     │   ├── SKILL.md        ← generated skill
@@ -31,7 +31,7 @@ Each project's `.claude/skills/` holds symlinks that point into this cache:
 
 ```
 your-app/.claude/skills/
-└── chunker-ruby.md  →  ~/.gem_skills/chunker-ruby/1.2.3/SKILL.md
+└── chunker-ruby.md  →  ~/.gem/skill/chunker-ruby/1.2.3/SKILL.md
 ```
 
 Two projects that pin different versions of the same gem each get the right
@@ -40,7 +40,7 @@ skill; the underlying content is generated once and shared.
 ## Installation
 
 ```bash
-gem install gem_skills
+gem install gem-skill
 ```
 
 This gives you the `gem skill` subcommand.
@@ -48,18 +48,18 @@ This gives you the `gem skill` subcommand.
 For `bundle skill` support (project-aware, reads `Gemfile.lock`), also run:
 
 ```bash
-bundle plugin install gem_skills
+bundle plugin install gem-skill
 ```
 
 or add it to your `Gemfile`:
 
 ```ruby
-plugin "gem_skills"
+plugin "gem-skill"
 ```
 
 ## Requirements
 
-`gem_skills` uses [RubyLLM](https://github.com/crmne/ruby_llm) to generate
+`gem-skill` uses [RubyLLM](https://github.com/crmne/ruby_llm) to generate
 skills. Configure at least one provider API key before running:
 
 ```bash
@@ -136,15 +136,15 @@ The content is synthesized from three sources, tried in priority order:
 ## Development
 
 ```bash
-git clone https://github.com/madbomber/gem_skills
-cd gem_skills
+git clone https://github.com/madbomber/gem-skill
+cd gem-skill
 bundle install
 bundle exec rake test
 ```
 
 ## Contributing
 
-Bug reports and pull requests welcome at https://github.com/madbomber/gem_skills.
+Bug reports and pull requests welcome at https://github.com/madbomber/gem-skill.
 
 ## License
 

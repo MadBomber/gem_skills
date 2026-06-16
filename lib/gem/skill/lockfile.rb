@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-module GemSkills
+module Gem::Skill
   # Parses Gemfile.lock to extract direct dependency gem name/version pairs.
   # Direct deps are listed in the DEPENDENCIES section; versions come from specs.
   module Lockfile

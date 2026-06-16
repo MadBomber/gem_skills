@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/gem_skills/version"
+require_relative "lib/gem/skill/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "gem_skills"
-  spec.version = GemSkills::VERSION
+  spec.name = "gem-skill"
+  spec.version = Gem::Skill::VERSION
   spec.authors = ["Dewayne VanHoozer"]
   spec.email = ["dewayne@vanhoozer.me"]
 
@@ -12,12 +12,12 @@ Gem::Specification.new do |spec|
 
   spec.description = <<~DESC
     Automatically generates Claude Code SKILL.md files from a gem's README,
-    RubyDoc, and changelog. Skills are cached in ~/.gem_skills and symlinked
+    RubyDoc, and changelog. Skills are cached in ~/.gem/skills and symlinked
     into projects driven by Gemfile.lock. Provides both 'gem skill' and
     'bundle skill' subcommands.
   DESC
 
-  spec.homepage = "https://github.com/madbomber/gem_skills"
+  spec.homepage = "https://github.com/madbomber/gem-skill"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.2.0"
   spec.metadata["homepage_uri"] = spec.homepage

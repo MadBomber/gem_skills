@@ -23,48 +23,48 @@ class GeneratorTest < Minitest::Test
 
   def test_generate_calls_llm_and_caches_result
     with_stubs(sources: FAKE_SOURCES, skill: FAKE_SKILL) do
-      result = GemSkills::Generator.new(@gem_name, @version).generate
+      result = Gem::Skill::Generator.new(@gem_name, @version).generate
       assert_equal FAKE_SKILL, result
-      assert GemSkills::Cache.cached?(@gem_name, @version)
-      assert_equal FAKE_SKILL, GemSkills::Cache.read(@gem_name, @version)
+      assert Gem::Skill::Cache.cached?(@gem_name, @version)
+      assert_equal FAKE_SKILL, Gem::Skill::Cache.read(@gem_name, @version)
     end
   end
 
   def test_generate_returns_cached_content_without_fetching
-    GemSkills::Cache.store(@gem_name, @version, FAKE_SKILL)
+    Gem::Skill::Cache.store(@gem_name, @version, FAKE_SKILL)
 
     # Fetcher raises if called — proves it was skipped
-    GemSkills::Fetcher.stub(:new, -> (*) { raise "should not fetch" }) do
-      result = GemSkills::Generator.new(@gem_name, @version).generate
+    Gem::Skill::Fetcher.stub(:new, -> (*) { raise "should not fetch" }) do
+      result = Gem::Skill::Generator.new(@gem_name, @version).generate
       assert_equal FAKE_SKILL, result
     end
   end
 
   def test_generate_force_bypasses_cache
-    GemSkills::Cache.store(@gem_name, @version, "stale content")
+    Gem::Skill::Cache.store(@gem_name, @version, "stale content")
     with_stubs(sources: FAKE_SOURCES, skill: FAKE_SKILL) do
-      result = GemSkills::Generator.new(@gem_name, @version).generate(force: true)
+      result = Gem::Skill::Generator.new(@gem_name, @version).generate(force: true)
       assert_equal FAKE_SKILL, result
     end
   end
 
   def test_generate_raises_when_no_sources_found
     with_stubs(sources: {}, skill: nil) do
-      assert_raises(GemSkills::Error) do
-        GemSkills::Generator.new(@gem_name, @version).generate
+      assert_raises(Gem::Skill::Error) do
+        Gem::Skill::Generator.new(@gem_name, @version).generate
       end
     end
   end
 
-  def test_generate_converts_ruby_llm_error_to_gem_skills_error
+  def test_generate_converts_ruby_llm_error_to_gem_skill_error
     fake_chat = Object.new
     fake_chat.define_singleton_method(:with_instructions) { |_| self }
     fake_chat.define_singleton_method(:ask) { |_| raise RubyLLM::UnauthorizedError, "Invalid API key" }
 
-    GemSkills::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
+    Gem::Skill::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
       RubyLLM.stub(:chat, fake_chat) do
-        error = assert_raises(GemSkills::Error) do
-          GemSkills::Generator.new(@gem_name, @version).generate
+        error = assert_raises(Gem::Skill::Error) do
+          Gem::Skill::Generator.new(@gem_name, @version).generate
         end
         assert_match "Invalid API key", error.message
       end
@@ -75,29 +75,29 @@ class GeneratorTest < Minitest::Test
     chunks    = %w[## Overview\n Chunks\ text.]
     fake_chat = streaming_chat(chunks)
 
-    GemSkills::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
+    Gem::Skill::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
       RubyLLM.stub(:chat, fake_chat) do
         received = []
-        GemSkills::Generator.new(@gem_name, @version).generate { |c| received << c }
+        Gem::Skill::Generator.new(@gem_name, @version).generate { |c| received << c }
         assert_equal chunks, received
       end
     end
   end
 
   def test_strip_wrapper_fence_removes_markdown_fence
-    gen = GemSkills::Generator.new(@gem_name, @version)
+    gen = Gem::Skill::Generator.new(@gem_name, @version)
     wrapped = "```markdown\n## Overview\nDoes stuff.\n```"
     assert_equal "## Overview\nDoes stuff.", gen.send(:strip_wrapper_fence, wrapped)
   end
 
   def test_strip_wrapper_fence_removes_plain_fence
-    gen = GemSkills::Generator.new(@gem_name, @version)
+    gen = Gem::Skill::Generator.new(@gem_name, @version)
     wrapped = "```\n## Overview\nDoes stuff.\n```"
     assert_equal "## Overview\nDoes stuff.", gen.send(:strip_wrapper_fence, wrapped)
   end
 
   def test_strip_wrapper_fence_leaves_clean_content_untouched
-    gen = GemSkills::Generator.new(@gem_name, @version)
+    gen = Gem::Skill::Generator.new(@gem_name, @version)
     clean = "## Overview\nDoes stuff."
     assert_equal clean, gen.send(:strip_wrapper_fence, clean)
   end
@@ -107,9 +107,9 @@ class GeneratorTest < Minitest::Test
     fake_chat      = responding_chat(FAKE_SKILL)
     capture_model  = ->(**kwargs) { captured_model = kwargs[:model]; fake_chat }
 
-    GemSkills::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
+    Gem::Skill::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
       RubyLLM.stub(:chat, capture_model) do
-        GemSkills::Generator.new(@gem_name, @version, model: "claude-haiku-4-5").generate
+        Gem::Skill::Generator.new(@gem_name, @version, model: "claude-haiku-4-5").generate
       end
     end
 
@@ -120,7 +120,7 @@ class GeneratorTest < Minitest::Test
 
   def with_stubs(sources:, skill:)
     fake_chat = skill ? responding_chat(skill) : nil
-    GemSkills::Fetcher.stub(:new, fake_fetcher(sources)) do
+    Gem::Skill::Fetcher.stub(:new, fake_fetcher(sources)) do
       RubyLLM.stub(:chat, fake_chat) do
         yield
       end
@@ -150,13 +150,13 @@ class GeneratorTest < Minitest::Test
   end
 
   def stub_cache_root(dir)
-    @original_root = GemSkills::Cache::ROOT
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, dir)
+    @original_root = Gem::Skill::Cache::ROOT
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, dir)
   end
 
   def restore_cache_root
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, @original_root)
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, @original_root)
   end
 end

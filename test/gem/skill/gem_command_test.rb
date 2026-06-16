@@ -2,7 +2,7 @@
 
 require "test_helper"
 require "tmpdir"
-require "gem_skills/cli/gem_command"
+require "gem/skill/cli/gem_command"
 
 class GemCommandTest < Minitest::Test
   def setup
@@ -26,13 +26,13 @@ class GemCommandTest < Minitest::Test
 
   def test_execute_shows_usage_for_nil_subcommand
     set_args
-    GemSkills.stub(:configure_llm!, nil) { @cmd.execute }
+    Gem::Skill.stub(:configure_llm!, nil) { @cmd.execute }
     assert_match "install", @output.string
   end
 
   def test_execute_shows_usage_and_error_for_unknown_subcommand
     set_args("bogus")
-    GemSkills.stub(:configure_llm!, nil) { @cmd.execute }
+    Gem::Skill.stub(:configure_llm!, nil) { @cmd.execute }
     assert_match "install", @output.string
     assert_match "Unknown subcommand", @errors.string
   end
@@ -59,7 +59,7 @@ class GemCommandTest < Minitest::Test
   def test_install_reports_error_when_auto_install_fails
     set_args("no_such_gem_xyz")
     @cmd.stub(:resolve_installed_version, nil) do
-      @cmd.stub(:install_gem, ->(*) { raise GemSkills::Error, "Could not install 'no_such_gem_xyz'" }) do
+      @cmd.stub(:install_gem, ->(*) { raise Gem::Skill::Error, "Could not install 'no_such_gem_xyz'" }) do
         @cmd.send(:cmd_install)
       end
     end
@@ -100,7 +100,7 @@ class GemCommandTest < Minitest::Test
     generated = []
     resolver = ->(name) { "1.0.0" }
     @cmd.stub(:resolve_installed_version, resolver) do
-      GemSkills::Generator.stub(:new, ->(name, *) {
+      Gem::Skill::Generator.stub(:new, ->(name, *) {
         name == "bad_gem" ? failing_generator : simple_generator_tracking(generated, name)
       }) { @cmd.send(:cmd_install) }
     end
@@ -125,17 +125,17 @@ class GemCommandTest < Minitest::Test
     captured = {}
     gen_obj  = simple_generator
     @cmd.stub(:resolve_installed_version, "1.0.0") do
-      GemSkills::Generator.stub(:new, ->(*_args, **kwargs) { captured.merge!(kwargs); gen_obj }) do
+      Gem::Skill::Generator.stub(:new, ->(*_args, **kwargs) { captured.merge!(kwargs); gen_obj }) do
         @cmd.send(:cmd_install)
       end
     end
     assert_equal "claude-haiku-4-5", captured[:model]
   end
 
-  def test_install_rescues_gem_skills_error_and_reports_via_alert
+  def test_install_rescues_gem_skill_error_and_reports_via_alert
     set_args("my_gem")
     @cmd.stub(:resolve_installed_version, "1.0.0") do
-      GemSkills::Generator.stub(:new, ->(*) { failing_generator }) do
+      Gem::Skill::Generator.stub(:new, ->(*) { failing_generator }) do
         @cmd.send(:cmd_install)  # must not raise
       end
     end
@@ -186,8 +186,8 @@ class GemCommandTest < Minitest::Test
     set_args("my_gem")
     set_option(:all, true)
     @cmd.send(:cmd_purge)
-    refute GemSkills::Cache.cached?("my_gem", "1.0.0")
-    refute GemSkills::Cache.cached?("my_gem", "2.0.0")
+    refute Gem::Skill::Cache.cached?("my_gem", "1.0.0")
+    refute Gem::Skill::Cache.cached?("my_gem", "2.0.0")
     assert_match "2 version", @output.string
   end
 
@@ -202,7 +202,7 @@ class GemCommandTest < Minitest::Test
     pre_cache("my_gem", "1.0.0")
     set_args("my_gem", "1.0.0")
     @cmd.send(:cmd_purge)
-    refute GemSkills::Cache.cached?("my_gem", "1.0.0")
+    refute Gem::Skill::Cache.cached?("my_gem", "1.0.0")
     assert_match "Purged", @output.string
   end
 
@@ -229,7 +229,7 @@ class GemCommandTest < Minitest::Test
   end
 
   def stub_generator(generated)
-    GemSkills::Generator.stub(:new, ->(name, *) {
+    Gem::Skill::Generator.stub(:new, ->(name, *) {
       obj = Object.new
       obj.define_singleton_method(:generate) { |**| generated << name; "# #{name} skill" }
       obj
@@ -250,18 +250,18 @@ class GemCommandTest < Minitest::Test
 
   def failing_generator
     obj = Object.new
-    obj.define_singleton_method(:generate) { |**| raise GemSkills::Error, "no docs found" }
+    obj.define_singleton_method(:generate) { |**| raise Gem::Skill::Error, "no docs found" }
     obj
   end
 
   def stub_cache_root(dir)
-    @original_root = GemSkills::Cache::ROOT
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, dir)
+    @original_root = Gem::Skill::Cache::ROOT
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, dir)
   end
 
   def restore_cache_root
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, @original_root)
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, @original_root)
   end
 end

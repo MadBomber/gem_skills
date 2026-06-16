@@ -6,8 +6,8 @@ require "tmpdir"
 class CacheTest < Minitest::Test
   def setup
     @tmpdir = Dir.mktmpdir
-    @original_root = GemSkills::Cache::ROOT
-    GemSkills::Cache.instance_variable_set(:@root, @tmpdir) rescue nil
+    @original_root = Gem::Skill::Cache::ROOT
+    Gem::Skill::Cache.instance_variable_set(:@root, @tmpdir) rescue nil
     # Override ROOT constant for tests
     @cache_root = @tmpdir
   end
@@ -17,48 +17,48 @@ class CacheTest < Minitest::Test
   end
 
   def test_skill_path_structure
-    path = GemSkills::Cache.skill_path("my_gem", "1.2.3")
+    path = Gem::Skill::Cache.skill_path("my_gem", "1.2.3")
     assert_match %r{my_gem/1\.2\.3/SKILL\.md}, path
   end
 
   def test_cached_returns_false_when_missing
-    refute GemSkills::Cache.cached?("no_gem", "0.0.1")
+    refute Gem::Skill::Cache.cached?("no_gem", "0.0.1")
   end
 
   def test_store_and_read_roundtrip
     with_tmp_cache do
-      GemSkills::Cache.store("my_gem", "1.0.0", "# skill content")
-      assert GemSkills::Cache.cached?("my_gem", "1.0.0")
-      assert_equal "# skill content", GemSkills::Cache.read("my_gem", "1.0.0")
+      Gem::Skill::Cache.store("my_gem", "1.0.0", "# skill content")
+      assert Gem::Skill::Cache.cached?("my_gem", "1.0.0")
+      assert_equal "# skill content", Gem::Skill::Cache.read("my_gem", "1.0.0")
     end
   end
 
   def test_versions_lists_cached_versions
     with_tmp_cache do
-      GemSkills::Cache.store("my_gem", "1.0.0", "v1")
-      GemSkills::Cache.store("my_gem", "2.0.0", "v2")
-      assert_equal %w[1.0.0 2.0.0], GemSkills::Cache.versions("my_gem").sort
+      Gem::Skill::Cache.store("my_gem", "1.0.0", "v1")
+      Gem::Skill::Cache.store("my_gem", "2.0.0", "v2")
+      assert_equal %w[1.0.0 2.0.0], Gem::Skill::Cache.versions("my_gem").sort
     end
   end
 
   def test_purge_removes_version_dir
     with_tmp_cache do
-      GemSkills::Cache.store("my_gem", "1.0.0", "content")
-      GemSkills::Cache.purge("my_gem", "1.0.0")
-      refute GemSkills::Cache.cached?("my_gem", "1.0.0")
+      Gem::Skill::Cache.store("my_gem", "1.0.0", "content")
+      Gem::Skill::Cache.purge("my_gem", "1.0.0")
+      refute Gem::Skill::Cache.cached?("my_gem", "1.0.0")
     end
   end
 
   def test_read_raises_when_not_cached
     with_tmp_cache do
-      assert_raises(GemSkills::Error) { GemSkills::Cache.read("missing_gem", "0.0.1") }
+      assert_raises(Gem::Skill::Error) { Gem::Skill::Cache.read("missing_gem", "0.0.1") }
     end
   end
 
   def test_store_writes_metadata_json
     with_tmp_cache do
-      GemSkills::Cache.store("my_gem", "1.0.0", "# skill", { model: "claude-sonnet-4-6" })
-      meta_path = GemSkills::Cache.metadata_path("my_gem", "1.0.0")
+      Gem::Skill::Cache.store("my_gem", "1.0.0", "# skill", { model: "claude-sonnet-4-6" })
+      meta_path = Gem::Skill::Cache.metadata_path("my_gem", "1.0.0")
       assert File.exist?(meta_path)
       meta = JSON.parse(File.read(meta_path))
       assert_equal "my_gem",            meta["gem_name"]
@@ -70,16 +70,16 @@ class CacheTest < Minitest::Test
 
   def test_all_gems_returns_sorted_gem_names
     with_tmp_cache do
-      GemSkills::Cache.store("zeitwerk", "2.0.0", "z skill")
-      GemSkills::Cache.store("faraday",  "1.0.0", "f skill")
-      assert_equal %w[faraday zeitwerk], GemSkills::Cache.all_gems
+      Gem::Skill::Cache.store("zeitwerk", "2.0.0", "z skill")
+      Gem::Skill::Cache.store("faraday",  "1.0.0", "f skill")
+      assert_equal %w[faraday zeitwerk], Gem::Skill::Cache.all_gems
     end
   end
 
   private
 
   def with_tmp_cache
-    stub_const(GemSkills::Cache, :ROOT, @tmpdir) { yield }
+    stub_const(Gem::Skill::Cache, :ROOT, @tmpdir) { yield }
   end
 
   def stub_const(mod, name, value)

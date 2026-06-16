@@ -4,17 +4,17 @@ require "rubygems/command"
 require "fileutils"
 require "json"
 require "tty-spinner"
-require "gem_skills"
+require "gem/skill"
 
 # Registered as `gem skill` via lib/rubygems_plugin.rb.
-# Manages the global ~/.gem_skills cache.
+# Manages the global ~/.gem/skills cache.
 class Gem::Commands::SkillCommand < Gem::Command
   def initialize
     super "skill", "Manage Claude Code AI skills for Ruby gems"
 
     add_option("-f", "--force",         "Regenerate even if already cached") { |_, o| o[:force] = true }
     add_option("-a", "--all",           "Purge all cached versions of a gem") { |_, o| o[:all] = true }
-    add_option("-m", "--model MODEL",   "LLM model to use (default: #{GemSkills::Generator::DEFAULT_MODEL})") do |model, o|
+    add_option("-m", "--model MODEL",   "LLM model to use (default: #{Gem::Skill::Generator::DEFAULT_MODEL})") do |model, o|
       o[:model] = model
     end
   end
@@ -33,16 +33,16 @@ class Gem::Commands::SkillCommand < Gem::Command
   def description
     <<~DESC
       install   Generate and cache a SKILL.md for a gem.
-      list      Show all skills in the global cache (~/.gem_skills).
+      list      Show all skills in the global cache (~/.gem/skills).
       purge     Remove a specific cached version.
 
-      Use 'bundle skill install' (after: bundle plugin install gem_skills)
+      Use 'bundle skill install' (after: bundle plugin install gem-skill)
       to generate and link skills for an entire project from Gemfile.lock.
     DESC
   end
 
   def execute
-    GemSkills.configure_llm!
+    Gem::Skill.configure_llm!
     subcmd = options[:args].shift
     case subcmd
     when "install" then cmd_install
@@ -68,7 +68,7 @@ class Gem::Commands::SkillCommand < Gem::Command
     end
 
     force = options[:force]
-    model = options[:model] || GemSkills::Generator::DEFAULT_MODEL
+    model = options[:model] || Gem::Skill::Generator::DEFAULT_MODEL
 
     multi = TTY::Spinner::Multi.new(
       "[:spinner] Generating skills (#{model})",
@@ -77,12 +77,13 @@ class Gem::Commands::SkillCommand < Gem::Command
     )
 
     threads = gem_names.map do |gem_name|
-      spinner = multi.register("  [:spinner] :title", title: gem_name)
+      spinner = multi.register("  [:spinner] :title")
+      spinner.update(title: gem_name)
       Thread.new(gem_name, spinner) { |name, sp| install_one(name, spinner: sp, force: force, model: model) }
     end
     threads.each(&:join)
 
-    say "Tip: run 'bundle plugin install gem_skills' to enable 'bundle skill'."
+    say "Tip: run 'bundle plugin install gem-skill' to enable 'bundle skill'."
   end
 
   def install_one(gem_name, spinner:, force:, model:)
@@ -94,14 +95,14 @@ class Gem::Commands::SkillCommand < Gem::Command
       version = install_gem(gem_name)
     end
 
-    if GemSkills::Cache.cached?(gem_name, version) && !force
+    if Gem::Skill::Cache.cached?(gem_name, version) && !force
       spinner.update(title: "#{gem_name} #{version}")
       spinner.success("already cached")
       return
     end
 
     spinner.update(title: "#{gem_name} #{version}")
-    GemSkills::Generator.new(gem_name, version, model: model).generate(force: force)
+    Gem::Skill::Generator.new(gem_name, version, model: model).generate(force: force)
     spinner.success("done")
   rescue => e
     spinner.error("#{gem_name} failed")
@@ -109,21 +110,21 @@ class Gem::Commands::SkillCommand < Gem::Command
   end
 
   def cmd_list
-    gems = GemSkills::Cache.all_gems
+    gems = Gem::Skill::Cache.all_gems
     if gems.empty?
       say "No skills cached yet."
       say "Run: gem skill install GEM_NAME"
       return
     end
 
-    say "Cached skills in #{GemSkills::Cache.root}:"
+    say "Cached skills in #{Gem::Skill::Cache.root}:"
     say ""
     gems.each do |name|
-      versions = GemSkills::Cache.versions(name)
+      versions = Gem::Skill::Cache.versions(name)
       say "  %-30s %s" % [name, versions.join(", ")]
     end
     say ""
-    say "#{gems.size} gem(s), #{gems.sum { |n| GemSkills::Cache.versions(n).size }} version(s) total."
+    say "#{gems.size} gem(s), #{gems.sum { |n| Gem::Skill::Cache.versions(n).size }} version(s) total."
   end
 
   def cmd_purge
@@ -134,12 +135,12 @@ class Gem::Commands::SkillCommand < Gem::Command
     end
 
     if options[:all]
-      versions = GemSkills::Cache.versions(gem_name)
+      versions = Gem::Skill::Cache.versions(gem_name)
       if versions.empty?
         alert_error "No cached versions for '#{gem_name}'"
         return
       end
-      versions.each { |v| GemSkills::Cache.purge(gem_name, v) }
+      versions.each { |v| Gem::Skill::Cache.purge(gem_name, v) }
       say "Purged #{versions.size} version(s) of #{gem_name}"
       return
     end
@@ -150,12 +151,12 @@ class Gem::Commands::SkillCommand < Gem::Command
       return
     end
 
-    unless GemSkills::Cache.cached?(gem_name, version)
+    unless Gem::Skill::Cache.cached?(gem_name, version)
       alert_error "Not cached: #{gem_name} #{version}"
       return
     end
 
-    GemSkills::Cache.purge(gem_name, version)
+    Gem::Skill::Cache.purge(gem_name, version)
     say "Purged: #{gem_name} #{version}"
   end
 
@@ -170,6 +171,6 @@ class Gem::Commands::SkillCommand < Gem::Command
     specs = Gem.install(gem_name, req)
     specs.find { |s| s.name == gem_name }&.version&.to_s
   rescue Gem::InstallError, Gem::GemNotFoundException, StandardError => e
-    raise GemSkills::Error, "Could not install '#{gem_name}': #{e.message}"
+    raise Gem::Skill::Error, "Could not install '#{gem_name}': #{e.message}"
   end
 end

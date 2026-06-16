@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_relative "gem_skills/cli/gem_command"
+require_relative "gem/skill/cli/gem_command"
 Gem::CommandManager.instance.register_command :skill
 
 require "rubygems/commands/install_command"
 require "tty-spinner"
 
-module GemSkills
+module Gem::Skill
   module InstallSkillOption
     def initialize
       super
@@ -17,9 +17,9 @@ module GemSkills
   end
 end
 
-Gem::Commands::InstallCommand.prepend(GemSkills::InstallSkillOption)
+Gem::Commands::InstallCommand.prepend(Gem::Skill::InstallSkillOption)
 
-module GemSkills
+module Gem::Skill
   @pending_skills = []
   @pending_lock   = Mutex.new
 
@@ -46,7 +46,7 @@ module GemSkills
       end
       threads.each(&:join)
     rescue => e
-      warn "gem_skills: #{e.message}"
+      warn "gem-skill: #{e.message}"
     end
 
     def generate_one_skill(name, version, spinner)
@@ -55,16 +55,16 @@ module GemSkills
       spinner.success("done")
     rescue => e
       spinner.error("failed")
-      warn "gem_skills: #{name}: #{e.message}"
+      warn "gem-skill: #{name}: #{e.message}"
     end
   end
 end
 
 Gem.post_install do |installer|
   next unless installer.options[:generate_skill]
-  GemSkills.pending_lock.synchronize do
-    GemSkills.pending_skills << { name: installer.spec.name, version: installer.spec.version.to_s }
+  Gem::Skill.pending_lock.synchronize do
+    Gem::Skill.pending_skills << { name: installer.spec.name, version: installer.spec.version.to_s }
   end
 end
 
-at_exit { GemSkills.generate_pending_skills }
+at_exit { Gem::Skill.generate_pending_skills }

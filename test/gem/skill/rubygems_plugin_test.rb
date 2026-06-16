@@ -13,14 +13,14 @@ class RubygemsPluginTest < Minitest::Test
     stub_cache_root(@tmpdir)
     @errors = StringIO.new
     Gem.ui.instance_variable_set(:@errs, @errors)
-    GemSkills.pending_skills.clear
+    Gem::Skill.pending_skills.clear
   end
 
   def teardown
     Gem.ui.instance_variable_set(:@errs, STDERR)
     FileUtils.rm_rf(@tmpdir)
     restore_cache_root
-    GemSkills.pending_skills.clear
+    Gem::Skill.pending_skills.clear
   end
 
   # --- InstallSkillOption ---
@@ -41,29 +41,29 @@ class RubygemsPluginTest < Minitest::Test
 
   def test_post_install_collects_spec_when_flag_set
     call_post_install_hooks(fake_installer("my_gem", "1.0.0", generate_skill: true))
-    assert_equal [{ name: "my_gem", version: "1.0.0" }], GemSkills.pending_skills
+    assert_equal [{ name: "my_gem", version: "1.0.0" }], Gem::Skill.pending_skills
   end
 
   def test_post_install_skips_when_flag_not_set
     call_post_install_hooks(fake_installer("my_gem", "1.0.0", generate_skill: false))
-    assert_empty GemSkills.pending_skills
+    assert_empty Gem::Skill.pending_skills
   end
 
   def test_post_install_collects_multiple_specs
     call_post_install_hooks(fake_installer("gem_a", "1.0.0", generate_skill: true))
     call_post_install_hooks(fake_installer("gem_b", "2.0.0", generate_skill: true))
-    assert_equal 2, GemSkills.pending_skills.size
-    assert_equal "gem_a", GemSkills.pending_skills[0][:name]
-    assert_equal "gem_b", GemSkills.pending_skills[1][:name]
+    assert_equal 2, Gem::Skill.pending_skills.size
+    assert_equal "gem_a", Gem::Skill.pending_skills[0][:name]
+    assert_equal "gem_b", Gem::Skill.pending_skills[1][:name]
   end
 
   # --- generate_pending_skills: orchestration ---
 
   def test_generate_pending_skills_does_nothing_when_empty
-    GemSkills.pending_skills.clear
+    Gem::Skill.pending_skills.clear
     configured = false
-    GemSkills.stub(:configure_llm!, -> { configured = true }) do
-      GemSkills.generate_pending_skills
+    Gem::Skill.stub(:configure_llm!, -> { configured = true }) do
+      Gem::Skill.generate_pending_skills
     end
     refute configured
   end
@@ -72,21 +72,21 @@ class RubygemsPluginTest < Minitest::Test
 
   def test_generate_one_skill_calls_generator_for_gem
     generated = []
-    GemSkills::Generator.stub(:new, ->(name, _ver) { fake_generator { generated << name } }) do
-      GemSkills.generate_one_skill("my_gem", "1.0.0", null_spinner)
+    Gem::Skill::Generator.stub(:new, ->(name, _ver) { fake_generator { generated << name } }) do
+      Gem::Skill.generate_one_skill("my_gem", "1.0.0", null_spinner)
     end
     assert_includes generated, "my_gem"
   end
 
-  def test_generate_one_skill_does_not_raise_on_gem_skills_error
-    GemSkills::Generator.stub(:new, ->(*) { failing_generator("no docs found") }) do
-      GemSkills.generate_one_skill("bad_gem", "1.0.0", null_spinner)  # must not raise
+  def test_generate_one_skill_does_not_raise_on_gem_skill_error
+    Gem::Skill::Generator.stub(:new, ->(*) { failing_generator("no docs found") }) do
+      Gem::Skill.generate_one_skill("bad_gem", "1.0.0", null_spinner)  # must not raise
     end
   end
 
   def test_generate_one_skill_does_not_raise_on_unexpected_error
-    GemSkills::Generator.stub(:new, ->(*) { failing_generator("network error", RuntimeError) }) do
-      GemSkills.generate_one_skill("bad_gem", "1.0.0", null_spinner)  # must not raise
+    Gem::Skill::Generator.stub(:new, ->(*) { failing_generator("network error", RuntimeError) }) do
+      Gem::Skill.generate_one_skill("bad_gem", "1.0.0", null_spinner)  # must not raise
     end
   end
 
@@ -94,8 +94,8 @@ class RubygemsPluginTest < Minitest::Test
     sp = null_spinner
     succeeded = false
     sp.define_singleton_method(:success) { |*| succeeded = true }
-    GemSkills::Generator.stub(:new, ->(*) { fake_generator }) do
-      GemSkills.generate_one_skill("my_gem", "1.0.0", sp)
+    Gem::Skill::Generator.stub(:new, ->(*) { fake_generator }) do
+      Gem::Skill.generate_one_skill("my_gem", "1.0.0", sp)
     end
     assert succeeded
   end
@@ -104,8 +104,8 @@ class RubygemsPluginTest < Minitest::Test
     sp = null_spinner
     errored = false
     sp.define_singleton_method(:error) { |*| errored = true }
-    GemSkills::Generator.stub(:new, ->(*) { failing_generator("bad") }) do
-      GemSkills.generate_one_skill("bad_gem", "1.0.0", sp)
+    Gem::Skill::Generator.stub(:new, ->(*) { failing_generator("bad") }) do
+      Gem::Skill.generate_one_skill("bad_gem", "1.0.0", sp)
     end
     assert errored
   end
@@ -139,20 +139,20 @@ class RubygemsPluginTest < Minitest::Test
     obj
   end
 
-  def failing_generator(message, klass = GemSkills::Error)
+  def failing_generator(message, klass = Gem::Skill::Error)
     obj = Object.new
     obj.define_singleton_method(:generate) { |**| raise klass, message }
     obj
   end
 
   def stub_cache_root(dir)
-    @original_root = GemSkills::Cache::ROOT
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, dir)
+    @original_root = Gem::Skill::Cache::ROOT
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, dir)
   end
 
   def restore_cache_root
-    GemSkills::Cache.send(:remove_const, :ROOT)
-    GemSkills::Cache.const_set(:ROOT, @original_root)
+    Gem::Skill::Cache.send(:remove_const, :ROOT)
+    Gem::Skill::Cache.const_set(:ROOT, @original_root)
   end
 end
