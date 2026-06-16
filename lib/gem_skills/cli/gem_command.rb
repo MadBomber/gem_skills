@@ -60,9 +60,11 @@ class Gem::Commands::SkillCommand < Gem::Command
     raise Gem::CommandLineError, "gem_name required. Usage: gem skill install GEM_NAME [VERSION]" unless gem_name
 
     version = options[:args].shift || resolve_installed_version(gem_name)
-    raise Gem::CommandLineError,
-          "Cannot determine installed version for '#{gem_name}'. " \
-          "Either install the gem first or pass the version explicitly." unless version
+
+    if version.nil?
+      say "gem '#{gem_name}' is not installed locally. Installing..."
+      version = install_gem(gem_name)
+    end
 
     force = options[:force]
     model = options[:model] || GemSkills::Generator::DEFAULT_MODEL
@@ -124,5 +126,13 @@ class Gem::Commands::SkillCommand < Gem::Command
     Gem::Specification.find_by_name(gem_name)&.version&.to_s
   rescue Gem::MissingSpecError
     nil
+  end
+
+  def install_gem(gem_name, version = nil)
+    req   = version ? Gem::Requirement.new("= #{version}") : Gem::Requirement.default
+    specs = Gem.install(gem_name, req)
+    specs.find { |s| s.name == gem_name }&.version&.to_s
+  rescue Gem::InstallError, Gem::GemNotFoundException, StandardError => e
+    raise GemSkills::Error, "Could not install '#{gem_name}': #{e.message}"
   end
 end

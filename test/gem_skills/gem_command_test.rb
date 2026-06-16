@@ -44,11 +44,27 @@ class GemCommandTest < Minitest::Test
     assert_raises(Gem::CommandLineError) { @cmd.send(:cmd_install) }
   end
 
-  def test_install_raises_when_version_cannot_be_determined
+  def test_install_auto_installs_when_gem_not_present
+    set_args("new_gem")
+    generated = []
+    @cmd.stub(:resolve_installed_version, nil) do
+      @cmd.stub(:install_gem, "2.0.0") do
+        stub_generator(generated) { @cmd.send(:cmd_install) }
+      end
+    end
+    assert_includes generated, "new_gem"
+    assert_match "not installed", @output.string
+    assert_match "Cached", @output.string
+  end
+
+  def test_install_reports_error_when_auto_install_fails
     set_args("no_such_gem_xyz")
     @cmd.stub(:resolve_installed_version, nil) do
-      assert_raises(Gem::CommandLineError) { @cmd.send(:cmd_install) }
+      @cmd.stub(:install_gem, ->(*) { raise GemSkills::Error, "Could not install 'no_such_gem_xyz'" }) do
+        @cmd.send(:cmd_install)
+      end
     end
+    assert_match "Could not install", @errors.string
   end
 
   def test_install_shows_already_cached_message
