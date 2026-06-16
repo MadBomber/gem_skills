@@ -31,7 +31,6 @@ class RubygemsPluginTest < Minitest::Test
 
   def test_install_command_accepts_with_skill_option
     cmd = Gem::Commands::InstallCommand.new
-    # --with-skill is a boolean option; handle_options raises on unknown flags
     assert_silent { cmd.handle_options(%w[my_gem --with-skill]) }
     assert cmd.options[:generate_skill]
   end
@@ -56,8 +55,6 @@ class RubygemsPluginTest < Minitest::Test
     generated = []
     call_post_install_hooks(installer, generated: generated)
     assert_includes generated, "my_gem"
-    assert_match "generating skill", @output.string
-    assert_match "cached at", @output.string
   end
 
   def test_post_install_reports_warning_on_gem_skills_error

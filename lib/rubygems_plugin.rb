@@ -7,12 +7,13 @@ Gem::CommandManager.instance.register_command :skill
 # gem install GEM_NAME --with-skill
 #
 # Prepend an option onto the built-in install command so that passing
-# --with-skill generates (and caches) a SKILL.md immediately after the gem
+# --skill generates (and caches) a SKILL.md immediately after the gem
 # is installed. The flag is stored in the installer's options hash and read
 # by the post_install hook, which is the only RubyGems-supported way to act
 # after a successful install without monkey-patching execute.
 # ---------------------------------------------------------------------------
 require "rubygems/commands/install_command"
+require "tty-spinner"
 
 module GemSkills
   module InstallSkillOption
@@ -32,13 +33,16 @@ Gem.post_install do |installer|
 
   name    = installer.spec.name
   version = installer.spec.version.to_s
+  spinner = TTY::Spinner.new("  [:spinner] :title", format: :dots, output: $stderr)
+  spinner.update(title: "#{name} #{version}")
+  spinner.auto_spin
 
   begin
     GemSkills.configure_llm!
-    Gem.ui.say "  gem_skills: generating skill for #{name} #{version}..."
-    GemSkills::Generator.new(name, version).generate { |chunk| print chunk; $stdout.flush }
-    Gem.ui.say "\n  gem_skills: cached at #{GemSkills::Cache.skill_path(name, version)}"
+    GemSkills::Generator.new(name, version).generate
+    spinner.success("#{name} #{version} done")
   rescue GemSkills::Error => e
+    spinner.error("#{name} failed")
     Gem.ui.alert_warning "gem_skills: #{e.message}"
   end
 end

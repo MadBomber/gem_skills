@@ -95,6 +95,7 @@ class Gem::Commands::SkillCommand < Gem::Command
     end
 
     if GemSkills::Cache.cached?(gem_name, version) && !force
+      spinner.update(title: "#{gem_name} #{version}")
       spinner.success("already cached")
       return
     end
