@@ -5,6 +5,12 @@
 
 require_relative "lib/gem/skill/cli/bundle_command"
 
-Bundler::Plugin::API.commands "skill" do |_command, args|
-  Gem::Skill::BundlerCommand.run(args)
+# Bundler invokes `@commands[command].new.exec(command, args)`, so the command
+# is a Bundler::Plugin::API subclass that declares the command and implements exec.
+class Gem::Skill::BundlerPlugin < Bundler::Plugin::API
+  command "skill"
+
+  def exec(_command, args)
+    Gem::Skill::BundlerCommand.run(args)
+  end
 end
