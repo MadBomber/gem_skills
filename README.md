@@ -3,6 +3,8 @@
 Generates Claude Code skill files from Ruby gem documentation and caches them
 globally so every project that uses a gem can share the same pre-built knowledge.
 
+**[Full documentation →](https://madbomber.github.io/gem-skill)**
+
 ## The problem it solves
 
 Every time Claude Code encounters a gem it hasn't seen in the current context, it
@@ -110,6 +112,9 @@ gem skill purge chunker-ruby 1.2.3
 
 # Remove all cached versions of a gem
 gem skill purge chunker-ruby --all
+
+# Print the installed version
+gem skill --version
 ```
 
 If a gem isn't installed locally, `gem skill install` will install it first.
@@ -151,6 +156,9 @@ bundle skill list
 # Options available on install and refresh
 bundle skill install --force
 bundle skill install --model claude-haiku-4-5
+
+# Print the installed version
+bundle skill --version
 ```
 
 ## What gets generated

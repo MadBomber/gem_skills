@@ -19,6 +19,7 @@ gem skill install GEM_NAME [GEM_NAME ...]
 |------|-------------|
 | `--force`, `-f` | Regenerate even if a skill is already cached |
 | `--model MODEL`, `-m MODEL` | LLM model to use (overrides `GEMSKILL_MODEL`) |
+| `--version`, `-v` | Print the installed gem-skill version and exit |
 
 **Examples:**
 
@@ -35,6 +36,19 @@ gem skill install rails --force --model claude-opus-4-8
 
 If a gem is not installed locally, gem-skill will install it automatically
 before generating the skill.
+
+---
+
+### `gem skill --version`
+
+Print the installed gem-skill version and exit.
+
+```bash
+gem skill --version
+# 0.1.3
+gem skill -v
+# 0.1.3
+```
 
 All gems are processed concurrently — you'll see a live spinner per gem:
 

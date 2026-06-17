@@ -18,6 +18,7 @@ class Gem::Commands::SkillCommand < Gem::Command
     add_option("-m", "--model MODEL",   "LLM model to use (default: #{Gem::Skill::Generator::DEFAULT_MODEL})") do |model, o|
       o[:model] = model
     end
+    add_option("-v", "--version",       "Print gem-skill version and exit") { |_, o| o[:version] = true }
   end
 
   def arguments
@@ -44,6 +45,10 @@ class Gem::Commands::SkillCommand < Gem::Command
   end
 
   def execute
+    if options[:version]
+      say Gem::Skill::VERSION
+      return
+    end
     Gem::Skill.configure_llm!
     subcmd = options[:args].shift
     case subcmd

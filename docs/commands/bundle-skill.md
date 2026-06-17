@@ -4,6 +4,15 @@ The `bundle skill` command is project-aware: it reads `Gemfile.lock` to
 determine which gems and versions are in use, generates skills for all of them,
 and links the results into `.claude/skills/` in the project root.
 
+## Global options
+
+These flags work without a subcommand:
+
+```bash
+bundle skill --version    # print installed version and exit
+bundle skill -v           # same
+```
+
 ## Prerequisites
 
 Run once after installing gem-skill:
@@ -34,6 +43,7 @@ bundle skill install [OPTIONS]
 |------|-------------|
 | `--force` | Regenerate even if skills are already cached |
 | `--model MODEL` | LLM model to use (overrides `GEMSKILL_MODEL`) |
+| `--version`, `-v` | Print the installed gem-skill version and exit |
 
 **Example:**
 

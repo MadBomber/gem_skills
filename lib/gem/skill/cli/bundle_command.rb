@@ -17,6 +17,11 @@ module Gem::Skill
       opts, rest = parse_options(args)
       subcmd = rest.shift
 
+      if opts[:version]
+        puts Gem::Skill::VERSION
+        return
+      end
+
       case subcmd
       when "install" then install(opts)
       when "refresh" then refresh(opts)
@@ -146,6 +151,7 @@ module Gem::Skill
       args.each do |arg|
         case arg
         when "--force"           then opts[:force] = true
+        when "--version", "-v"   then opts[:version] = true
         when /\A--model(?:=(.+))?\z/
           opts[:model] = $1 || args[args.index(arg) + 1]
         else
@@ -170,6 +176,7 @@ module Gem::Skill
         Options:
           --force         Regenerate even if already cached
           --model MODEL   LLM model to use (default: #{Generator::DEFAULT_MODEL})
+          --version, -v   Print gem-skill version and exit
       USAGE
     end
     private_class_method :usage
