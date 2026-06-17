@@ -133,6 +133,13 @@ class Gem::Commands::SkillCommand < Gem::Command
   end
 
   def cmd_setup
+    plugin_list = `bundle plugin list 2>/dev/null`
+    if plugin_list.include?("gem-skill")
+      say "gem-skill is already registered as a Bundler plugin."
+      say "Use 'bundle skill install' in any project."
+      return
+    end
+
     say "Registering gem-skill as a Bundler plugin..."
     if system("bundle", "plugin", "install", "gem-skill")
       say "Done. Use 'bundle skill install' in any project."
