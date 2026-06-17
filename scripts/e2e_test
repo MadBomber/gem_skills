@@ -1,16 +1,20 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# End-to-end test: fetch docs for a gem and generate a SKILL.md
-# Usage: bundle exec ruby bin/e2e_test [GEM_NAME [VERSION]]
+# End-to-end test: full pipeline for one gem — fetch, generate, cache, link.
+# Usage: bundle exec ruby scripts/e2e_test [GEM_NAME [VERSION [MODEL]]]
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "gem/skill"
-require "ruby_llm"
+require "gem/skill/runner"
+require "gem/skill/linker"
+require "async"
+require "tty-spinner"
+require "tmpdir"
 
 GEM_NAME = ARGV[0] || "zeitwerk"
 VERSION  = ARGV[1] || Gem::Specification.find_by_name(GEM_NAME)&.version&.to_s
-MODEL    = ARGV[2] || "gpt-4o-mini"
+MODEL    = ARGV[2] || Gem::Skill::Generator::DEFAULT_MODEL
 
 abort "Gem '#{GEM_NAME}' not installed. Run: gem install #{GEM_NAME}" unless VERSION
 
@@ -29,43 +33,73 @@ puts ""
 puts "[ FETCH ]"
 fetcher = Gem::Skill::Fetcher.new(GEM_NAME, VERSION)
 sources = fetcher.fetch_all
+abort "No sources found — nothing to generate from." if sources.empty?
 
-if sources.empty?
-  abort "No sources found — nothing to generate from."
-end
-
-sources.each do |name, content|
-  puts "  %-12s %d chars" % [name, content.length]
-end
+sources.each { |name, content| puts "  %-12s %d chars" % [name, content.length] }
 puts ""
 
-# --- Phase 2: Generate ---
+# --- Phase 2: Runner.install_skill via async fiber ---
 
-puts "[ GENERATE ]  streaming output below"
-puts "-" * 60
+puts "[ RUNNER ]  (via Async fiber + TTY spinner)"
+multi = TTY::Spinner::Multi.new("[:spinner] Installing skill", format: :dots, output: $stderr)
+sp    = multi.register("  [:spinner] :title")
+sp.update(title: "#{GEM_NAME} #{VERSION}")
 
-skill_content = ""
-generator = Gem::Skill::Generator.new(GEM_NAME, VERSION, model: MODEL)
-skill_content = generator.generate(force: true) do |chunk|
-  print chunk
-  $stdout.flush
+err = nil
+Async do
+  barrier = Async::Barrier.new
+  barrier.async do
+    sp.auto_spin
+    err = Gem::Skill::Runner.install_skill(GEM_NAME, VERSION, sp, force: true, model: MODEL)
+  end
+  barrier.wait
+ensure
+  barrier.stop
 end
 
-puts ""
-puts "-" * 60
+if err
+  abort "\nRunner failed: #{err}"
+end
 puts ""
 
 # --- Phase 3: Verify cache ---
 
 puts "[ CACHE ]"
 cached_path = Gem::Skill::Cache.skill_path(GEM_NAME, VERSION)
-if File.exist?(cached_path)
-  puts "  Written: #{cached_path}"
-  puts "  Size:    #{File.size(cached_path)} bytes"
-else
-  puts "  ERROR: cache file not found at #{cached_path}"
-  exit 1
+abort "  ERROR: cache file not found at #{cached_path}" unless File.exist?(cached_path)
+
+metadata_path = Gem::Skill::Cache.metadata_path(GEM_NAME, VERSION)
+puts "  SKILL.md:  #{cached_path} (#{File.size(cached_path)} bytes)"
+puts "  metadata:  #{metadata_path} (#{File.exist?(metadata_path) ? "present" : "MISSING"})"
+puts ""
+
+# --- Phase 4: Linker ---
+
+puts "[ LINKER ]"
+project_dir = Dir.mktmpdir("gem-skill-e2e")
+begin
+  Gem::Skill::Linker.link(GEM_NAME, VERSION, project_dir)
+
+  link_path  = File.join(project_dir, ".claude", "skills", GEM_NAME)
+  skill_via_link = File.join(link_path, "SKILL.md")
+
+  abort "  ERROR: symlink not created at #{link_path}" unless File.symlink?(link_path)
+  abort "  ERROR: symlink does not resolve to a directory" unless File.directory?(link_path)
+  abort "  ERROR: SKILL.md not accessible through symlink" unless File.exist?(skill_via_link)
+
+  puts "  symlink:   #{link_path}"
+  puts "  -> target: #{File.readlink(link_path)}"
+  puts "  SKILL.md accessible through symlink: yes"
+
+  entries = Gem::Skill::Linker.linked_gems(project_dir)
+  entry   = entries.find { |e| e[:gem_name] == GEM_NAME }
+  abort "  ERROR: linked_gems did not return #{GEM_NAME}" unless entry
+  puts "  linked_gems reports: #{entry.inspect}"
+ensure
+  FileUtils.rm_rf(project_dir)
 end
 
 puts ""
-puts "Done."
+puts "=" * 60
+puts "All phases passed."
+puts "=" * 60

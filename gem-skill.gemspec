@@ -58,6 +58,5 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "async",       "~> 2.0"
   spec.add_dependency "ruby_llm",    "~> 1.0"
-  spec.add_dependency "thor",        "~> 1.0"
   spec.add_dependency "tty-spinner"
 end
