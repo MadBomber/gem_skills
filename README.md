@@ -17,7 +17,7 @@ ingestion work.
 ## How the cache is laid out
 
 ```
-~/.gem/skill/
+~/.gem/skills/
 └── chunker-ruby/
     ├── 1.2.3/
     │   ├── SKILL.md        ← generated skill
@@ -31,7 +31,7 @@ Each project's `.claude/skills/` holds symlinks that point into this cache:
 
 ```
 your-app/.claude/skills/
-└── chunker-ruby.md  →  ~/.gem/skill/chunker-ruby/1.2.3/SKILL.md
+└── chunker-ruby.md  →  ~/.gem/skills/chunker-ruby/1.2.3/SKILL.md
 ```
 
 Two projects that pin different versions of the same gem each get the right
@@ -63,10 +63,30 @@ plugin "gem-skill"
 skills. Configure at least one provider API key before running:
 
 ```bash
-export ANTHROPIC_API_KEY="..."   # Claude (default model: claude-sonnet-4-6)
-export OPENAI_API_KEY="..."      # or GPT
+export OPENAI_API_KEY="..."      # default model: gpt-5.5
+export ANTHROPIC_API_KEY="..."   # or use Claude
 export GEMINI_API_KEY="..."      # or Gemini
 ```
+
+## Configuration
+
+Two environment variables control `gem-skill`'s behaviour:
+
+| Variable | Default | Description |
+|---|---|---|
+| `GEMSKILL_DIR` | `~/.gem/skills` | Root directory for the skill cache |
+| `GEMSKILL_MODEL` | `gpt-5.5` | LLM model used when generating skills |
+
+```bash
+# Store skills on a shared drive accessible to all projects
+export GEMSKILL_DIR="/Volumes/shared/gem-skills"
+
+# Switch the default model to Claude
+export GEMSKILL_MODEL="claude-sonnet-4-6"
+```
+
+The `--model` flag on any command overrides `GEMSKILL_MODEL` for that
+invocation. `GEMSKILL_DIR` applies everywhere the cache is read or written.
 
 ## Usage
 
@@ -76,8 +96,8 @@ export GEMINI_API_KEY="..."      # or Gemini
 # Generate a skill for an installed gem (version auto-detected)
 gem skill install chunker-ruby
 
-# Specify the version explicitly
-gem skill install chunker-ruby 1.2.3
+# Install skills for multiple gems at once (runs concurrently)
+gem skill install chunker-ruby faraday debug_me
 
 # Force regeneration even if already cached
 gem skill install chunker-ruby --force
@@ -90,7 +110,22 @@ gem skill list
 
 # Remove a specific cached version
 gem skill purge chunker-ruby 1.2.3
+
+# Remove all cached versions of a gem
+gem skill purge chunker-ruby --all
 ```
+
+If a gem isn't installed locally, `gem skill install` will install it first.
+
+### `gem install --with-skill`
+
+Generate skills for gems as you install them:
+
+```bash
+gem install faraday debug_me --with-skill
+```
+
+Skills are generated concurrently after all gems finish installing.
 
 ### `bundle skill` — project-aware, driven by Gemfile.lock
 

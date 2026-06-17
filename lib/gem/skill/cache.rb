@@ -6,9 +6,9 @@ require "time"
 
 module Gem::Skill
   # Manages the global ~/.gem/skills cache.
-  # Structure: ~/.gem/skill/<gem_name>/<version>/SKILL.md
+  # Structure: ~/.gem/skills/<gem_name>/<version>/SKILL.md
   module Cache
-    ROOT = File.expand_path("~/.gem/skills").freeze
+    ROOT = File.expand_path(ENV.fetch("GEMSKILL_DIR", "~/.gem/skills")).freeze
 
     def self.root = ROOT
 

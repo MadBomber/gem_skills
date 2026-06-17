@@ -5,7 +5,7 @@ require "ruby_llm"
 module Gem::Skill
   # Drives the LLM pipeline: fetches docs, generates a SKILL.md, caches it.
   class Generator
-    DEFAULT_MODEL   = "gpt-5.5"
+    DEFAULT_MODEL = ENV.fetch("GEMSKILL_MODEL", "gpt-5.5")
     MAX_SOURCE_CHARS = 60_000  # guard against enormous READMEs blowing the context window
 
     SYSTEM_INSTRUCTIONS = <<~SYSTEM
