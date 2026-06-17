@@ -1,0 +1,79 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+#
+# Points ALL Bundler plugin indexes at the local source tree so that
+# `bundle skill` picks up code changes immediately — no build/release needed.
+#
+# Bundler maintains two indexes:
+#   global:  ~/.bundle/plugin/index  (used when no Gemfile present)
+#   local:   <project>/.bundle/plugin/index  (takes precedence inside project)
+#
+# Both must be updated for changes to take effect inside this project.
+#
+# Usage:
+#   bin/dev_install          # redirect plugin to source
+#   bin/dev_install --reset  # restore to the last released gem install
+
+require "yaml"
+require "rbconfig"
+require "fileutils"
+
+SOURCE_ROOT = File.expand_path("..", __dir__)
+
+INDEXES = [
+  File.expand_path("~/.bundle/plugin/index"),
+  File.join(SOURCE_ROOT, ".bundle", "plugin", "index")
+].freeze
+
+def load_index(path)
+  File.exist?(path) ? YAML.load_file(path) : {}
+end
+
+def save_index(path, data)
+  File.write(path, YAML.dump(data))
+end
+
+def installed_gem_path
+  gem_dir = RbConfig::CONFIG["gemdir"] ||
+            File.join(RbConfig::CONFIG["libdir"], "ruby", "gems", RbConfig::CONFIG["ruby_version"])
+  # Prefer the project-local .bundle copy, then the system gem
+  local = Dir.glob(File.join(SOURCE_ROOT, ".bundle", "plugin", "gems", "gem-skill-*")).max
+  local || Dir.glob(File.join(gem_dir, "gems", "gem-skill-*")).max
+end
+
+if ARGV.include?("--reset")
+  gem_path = installed_gem_path
+  unless gem_path
+    puts "No installed gem found. Run: bundle plugin install gem-skill"
+    exit 1
+  end
+
+  INDEXES.each do |idx_path|
+    next unless File.exist?(idx_path)
+    backup = "#{idx_path}.backup"
+    if File.exist?(backup)
+      File.rename(backup, idx_path)
+      puts "Restored #{idx_path}"
+    else
+      index = load_index(idx_path)
+      index["load_paths"]   = { "gem-skill" => [File.join(gem_path, "lib")] }
+      index["plugin_paths"] = { "gem-skill" => gem_path }
+      save_index(idx_path, index)
+      puts "Reset #{File.basename(File.dirname(idx_path), "plugin")} index to: #{gem_path}"
+    end
+  end
+else
+  INDEXES.each do |idx_path|
+    next unless File.exist?(idx_path)
+    FileUtils.cp(idx_path, "#{idx_path}.backup")
+    index = load_index(idx_path)
+    index["commands"]    ||= { "skill" => "gem-skill" }
+    index["load_paths"]    = { "gem-skill" => [File.join(SOURCE_ROOT, "lib")] }
+    index["plugin_paths"]  = { "gem-skill" => SOURCE_ROOT }
+    save_index(idx_path, index)
+    puts "Updated: #{idx_path}"
+  end
+  puts ""
+  puts "bundle skill now loads from: #{SOURCE_ROOT}"
+  puts "Run 'bin/dev_install --reset' to restore the released version."
+end

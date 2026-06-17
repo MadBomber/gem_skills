@@ -23,24 +23,25 @@ class LinkerTest < Minitest::Test
     restore_cache_root
   end
 
-  def test_link_creates_symlink_in_claude_skills
+  def test_link_creates_directory_symlink_in_claude_skills
     Gem::Skill::Linker.link(@gem_name, @version, @project_dir)
-    link = File.join(@project_dir, ".claude", "skills", "#{@gem_name}.md")
-    assert File.symlink?(link)
-    assert File.exist?(link)
+    link = File.join(@project_dir, ".claude", "skills", @gem_name)
+    assert File.symlink?(link), "expected a symlink at #{link}"
+    assert File.directory?(link), "expected symlink to resolve to a directory"
+    assert File.exist?(File.join(link, "SKILL.md")), "expected SKILL.md inside linked directory"
   end
 
   def test_link_replaces_existing_symlink
     Gem::Skill::Linker.link(@gem_name, @version, @project_dir)
     Gem::Skill::Linker.link(@gem_name, @version, @project_dir) # idempotent
-    link = File.join(@project_dir, ".claude", "skills", "#{@gem_name}.md")
+    link = File.join(@project_dir, ".claude", "skills", @gem_name)
     assert File.symlink?(link)
   end
 
   def test_unlink_removes_symlink
     Gem::Skill::Linker.link(@gem_name, @version, @project_dir)
     Gem::Skill::Linker.unlink(@gem_name, @project_dir)
-    link = File.join(@project_dir, ".claude", "skills", "#{@gem_name}.md")
+    link = File.join(@project_dir, ".claude", "skills", @gem_name)
     refute File.exist?(link)
   end
 

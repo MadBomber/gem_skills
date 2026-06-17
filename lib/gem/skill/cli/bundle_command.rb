@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "json"
+require "tty-spinner"
 require "gem/skill"
 
 module Gem::Skill
@@ -35,84 +36,72 @@ module Gem::Skill
         return
       end
 
-      force = opts[:force]
-      model = opts[:model] || Generator::DEFAULT_MODEL
-      errors = []
+      force        = opts[:force]
+      model        = opts[:model] || Generator::DEFAULT_MODEL
+      errors       = []
+      errors_lock  = Mutex.new
 
-      puts "Installing skills for #{gems.size} gem(s) (model: #{model})..."
-      puts ""
+      multi = TTY::Spinner::Multi.new(
+        "[:spinner] Installing skills (#{model})",
+        format: :dots,
+        output: $stderr
+      )
 
-      gems.each do |gem_name, version|
-        if Cache.cached?(gem_name, version) && !force
-          print "  skip  #{gem_name} #{version}"
-        else
-          print "  gen   #{gem_name} #{version}  "
-          $stdout.flush
-          Generator.new(gem_name, version, model: model).generate(force: force) do |chunk|
-            print chunk
-            $stdout.flush
-          end
+      threads = gems.map do |gem_name, version|
+        sp = multi.register("  [:spinner] :title")
+        sp.update(title: "#{gem_name} #{version}")
+        Thread.new(gem_name, version, sp) do |name, ver, spinner|
+          err = install_one(name, ver, spinner, force: force, model: model)
+          errors_lock.synchronize { errors << "#{name} #{ver}: #{err}" } if err
         end
-
-        Linker.link(gem_name, version)
-        puts "  ✓"
-      rescue Gem::Skill::Error => e
-        puts "  ✗ #{e.message}"
-        errors << "#{gem_name} #{version}: #{e.message}"
       end
 
+      threads.each(&:join)
       Linker.prune_dead_links
 
-      puts ""
-      puts "Done. #{gems.size - errors.size}/#{gems.size} skill(s) linked into .claude/skills/"
-
       if errors.any?
-        puts ""
-        puts "Errors:"
-        errors.each { |e| puts "  #{e}" }
+        warn ""
+        warn "Errors (#{errors.size}):"
+        errors.each { |e| warn "  #{e}" }
       end
     end
 
     def self.refresh(opts = {})
-      gems   = Lockfile.gems
-      linked = Linker.linked_gems.to_h { |e| [e[:gem_name], e[:version]] }
-      force  = opts[:force]
-      model  = opts[:model] || Generator::DEFAULT_MODEL
-      errors = []
+      gems         = Lockfile.gems
+      linked       = Linker.linked_gems.to_h { |e| [e[:gem_name], e[:version]] }
+      force        = opts[:force]
+      model        = opts[:model] || Generator::DEFAULT_MODEL
+      errors       = []
+      errors_lock  = Mutex.new
 
-      puts "Refreshing skills (model: #{model})..."
-      puts ""
+      multi = TTY::Spinner::Multi.new(
+        "[:spinner] Refreshing skills (#{model})",
+        format: :dots,
+        output: $stderr
+      )
 
-      gems.each do |gem_name, version|
-        if !force && linked[gem_name] == version
-          puts "  ok    #{gem_name} #{version}"
-          next
+      threads = gems.map do |gem_name, version|
+        sp = multi.register("  [:spinner] :title")
+        sp.update(title: "#{gem_name} #{version}")
+        Thread.new(gem_name, version, sp) do |name, ver, spinner|
+          err = if !force && linked[name] == ver
+            spinner.auto_spin
+            spinner.success("up to date")
+            nil
+          else
+            install_one(name, ver, spinner, force: force, model: model)
+          end
+          errors_lock.synchronize { errors << "#{name} #{ver}: #{err}" } if err
         end
-
-        action = linked.key?(gem_name) ? "update" : "new"
-        print "  #{action.ljust(6)}#{gem_name} #{version}  "
-        $stdout.flush
-
-        Generator.new(gem_name, version, model: model).generate(force: force) do |chunk|
-          print chunk
-          $stdout.flush
-        end
-
-        Linker.link(gem_name, version)
-        puts "  ✓"
-      rescue Gem::Skill::Error => e
-        puts "  ✗ #{e.message}"
-        errors << "#{gem_name} #{version}: #{e.message}"
       end
 
+      threads.each(&:join)
       Linker.prune_dead_links
 
-      puts ""
-      puts "Refreshed."
       if errors.any?
-        puts ""
-        puts "Errors:"
-        errors.each { |e| puts "  #{e}" }
+        warn ""
+        warn "Errors (#{errors.size}):"
+        errors.each { |e| warn "  #{e}" }
       end
     end
 
@@ -124,8 +113,8 @@ module Gem::Skill
         return
       end
 
-      ok      = entries.count { |e| e[:valid] }
-      broken  = entries.size - ok
+      ok     = entries.count { |e| e[:valid] }
+      broken = entries.size - ok
 
       puts "Skills linked in .claude/skills/  (#{ok} ok#{broken > 0 ? ", #{broken} broken" : ""}):"
       puts ""
@@ -136,6 +125,23 @@ module Gem::Skill
     end
 
     # --- private ---
+
+    def self.install_one(gem_name, version, spinner, force:, model:)
+      spinner.auto_spin
+      if Cache.cached?(gem_name, version) && !force
+        Linker.link(gem_name, version)
+        spinner.success("already cached")
+        return nil
+      end
+      Generator.new(gem_name, version, model: model).generate(force: force)
+      Linker.link(gem_name, version)
+      spinner.success("done")
+      nil
+    rescue => e
+      spinner.error("failed")
+      e.message
+    end
+    private_class_method :install_one
 
     def self.parse_options(args)
       opts      = {}

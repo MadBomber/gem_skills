@@ -21,7 +21,9 @@ module Gem::Skill
       Output raw Markdown directly. Do NOT wrap the output in a code fence or any
       other container — the file is Markdown, so no ```markdown wrapper.
 
-      Begin immediately with the first section heading. Use exactly these sections:
+      Begin with a top-level heading identifying the gem and version, then use exactly these sections:
+
+      # %<gem_name>s v%<version>s
 
       ## Overview
       One paragraph: what the gem does and when to reach for it.
