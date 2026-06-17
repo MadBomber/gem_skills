@@ -21,14 +21,15 @@ class Gem::Commands::SkillCommand < Gem::Command
   end
 
   def arguments
-    "SUBCOMMAND  one of: install, list, purge"
+    "SUBCOMMAND  one of: install, list, purge, setup"
   end
 
   def usage
     "#{program_name} install GEM_NAME [GEM_NAME ...]\n" \
     "       #{program_name} list\n" \
     "       #{program_name} purge GEM_NAME VERSION\n" \
-    "       #{program_name} purge GEM_NAME --all"
+    "       #{program_name} purge GEM_NAME --all\n" \
+    "       #{program_name} setup"
   end
 
   def description
@@ -36,9 +37,9 @@ class Gem::Commands::SkillCommand < Gem::Command
       install   Generate and cache a SKILL.md for a gem.
       list      Show all skills in the global cache (~/.gem/skills).
       purge     Remove a specific cached version.
+      setup     Register gem-skill as a Bundler plugin (run once after install).
 
-      Use 'bundle skill install' (after: bundle plugin install gem-skill)
-      to generate and link skills for an entire project from Gemfile.lock.
+      Use 'bundle skill install' in any project after running 'gem skill setup'.
     DESC
   end
 
@@ -49,6 +50,7 @@ class Gem::Commands::SkillCommand < Gem::Command
     when "install" then cmd_install
     when "list"    then cmd_list
     when "purge"   then cmd_purge
+    when "setup"   then cmd_setup
     when nil
       say usage
     else
@@ -94,24 +96,16 @@ class Gem::Commands::SkillCommand < Gem::Command
 
   def install_one(gem_name, spinner:, force:, model:)
     spinner.auto_spin
-
     version = resolve_installed_version(gem_name)
     if version.nil?
       spinner.update(title: "#{gem_name} (installing...)")
       version = install_gem(gem_name)
     end
-
-    if Gem::Skill::Cache.cached?(gem_name, version) && !force
-      spinner.update(title: "#{gem_name} #{version}")
-      spinner.success("already cached")
-      return
-    end
-
     spinner.update(title: "#{gem_name} #{version}")
-    Gem::Skill::Generator.new(gem_name, version, model: model).generate(force: force)
-    spinner.success("done")
-  rescue => e
-    spinner.error("#{gem_name} failed")
+    err = Gem::Skill::Runner.install_skill(gem_name, version, spinner, force: force, model: model)
+    alert_error "#{gem_name}: #{err}" if err
+  rescue Gem::Skill::Error => e
+    spinner.error("failed")
     alert_error "#{gem_name}: #{e.message}"
   end
 
@@ -131,6 +125,15 @@ class Gem::Commands::SkillCommand < Gem::Command
     end
     say ""
     say "#{gems.size} gem(s), #{gems.sum { |n| Gem::Skill::Cache.versions(n).size }} version(s) total."
+  end
+
+  def cmd_setup
+    say "Registering gem-skill as a Bundler plugin..."
+    if system("bundle", "plugin", "install", "gem-skill")
+      say "Done. Use 'bundle skill install' in any project."
+    else
+      alert_error "Failed. Try running manually: bundle plugin install gem-skill"
+    end
   end
 
   def cmd_purge

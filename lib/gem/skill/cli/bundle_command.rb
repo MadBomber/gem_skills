@@ -63,12 +63,7 @@ module Gem::Skill
       end
 
       Linker.prune_dead_links
-
-      if errors.any?
-        warn ""
-        warn "Errors (#{errors.size}):"
-        errors.each { |e| warn "  #{e}" }
-      end
+      report_errors(errors)
     end
 
     def self.refresh(opts = {})
@@ -106,12 +101,7 @@ module Gem::Skill
       end
 
       Linker.prune_dead_links
-
-      if errors.any?
-        warn ""
-        warn "Errors (#{errors.size}):"
-        errors.each { |e| warn "  #{e}" }
-      end
+      report_errors(errors)
     end
 
     def self.list
@@ -137,20 +127,17 @@ module Gem::Skill
 
     def self.install_one(gem_name, version, spinner, force:, model:)
       spinner.auto_spin
-      if Cache.cached?(gem_name, version) && !force
-        Linker.link(gem_name, version)
-        spinner.success("already cached")
-        return nil
-      end
-      Generator.new(gem_name, version, model: model).generate(force: force)
-      Linker.link(gem_name, version)
-      spinner.success("done")
-      nil
-    rescue => e
-      spinner.error("failed")
-      e.message
+      Runner.install_skill(gem_name, version, spinner, force: force, model: model)
     end
     private_class_method :install_one
+
+    def self.report_errors(errors)
+      return if errors.empty?
+      warn ""
+      warn "Errors (#{errors.size}):"
+      errors.each { |e| warn "  #{e}" }
+    end
+    private_class_method :report_errors
 
     def self.parse_options(args)
       opts      = {}

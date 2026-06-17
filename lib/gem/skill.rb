@@ -6,6 +6,7 @@ require_relative "skill/fetcher"
 require_relative "skill/generator"
 require_relative "skill/linker"
 require_relative "skill/lockfile"
+require_relative "skill/runner"
 
 module Gem::Skill
   class Error < StandardError; end

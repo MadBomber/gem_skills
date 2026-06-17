@@ -24,6 +24,19 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = spec.homepage
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/master/CHANGELOG.md"
 
+  spec.post_install_message = <<~MSG
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      gem-skill installed!
+
+      'gem skill install GEM_NAME' is ready to use.
+
+      To enable 'bundle skill' in your projects, run:
+
+        gem skill setup
+
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  MSG
+
   # Uncomment the line below to require MFA for gem pushes.
   # This helps protect your gem from supply chain attacks by ensuring
   # no one can publish a new version without multi-factor authentication.

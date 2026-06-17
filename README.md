@@ -31,7 +31,7 @@ Each project's `.claude/skills/` holds symlinks that point into this cache:
 
 ```
 your-app/.claude/skills/
-└── chunker-ruby.md  →  ~/.gem/skills/chunker-ruby/1.2.3/SKILL.md
+└── chunker-ruby/  →  ~/.gem/skills/chunker-ruby/1.2.3/
 ```
 
 Two projects that pin different versions of the same gem each get the right
@@ -41,17 +41,14 @@ skill; the underlying content is generated once and shared.
 
 ```bash
 gem install gem-skill
+gem skill setup
 ```
 
-This gives you the `gem skill` subcommand.
+`gem install` gives you the `gem skill` subcommand.
+`gem skill setup` registers gem-skill as a Bundler plugin, enabling `bundle skill` in any project.
 
-For `bundle skill` support (project-aware, reads `Gemfile.lock`), also run:
-
-```bash
-bundle plugin install gem-skill
-```
-
-or add it to your `Gemfile`:
+You only need to run `gem skill setup` once per machine. Alternatively, you can
+add the plugin directly to a project's `Gemfile`:
 
 ```ruby
 plugin "gem-skill"
@@ -117,6 +114,16 @@ gem skill purge chunker-ruby --all
 
 If a gem isn't installed locally, `gem skill install` will install it first.
 
+### `gem skill setup`
+
+Run once after `gem install gem-skill` to enable `bundle skill` globally:
+
+```bash
+gem skill setup
+```
+
+This registers gem-skill as a Bundler plugin so `bundle skill` works in every project.
+
 ### `gem install --with-skill`
 
 Generate skills for gems as you install them:
@@ -145,9 +152,6 @@ bundle skill list
 bundle skill install --force
 bundle skill install --model claude-haiku-4-5
 ```
-
-The `install` and `refresh` commands stream LLM output as it is generated, so
-you see progress rather than a silent wait.
 
 ## What gets generated
 
