@@ -749,6 +749,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#verifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifier
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#linker" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -983,6 +994,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#verifier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifier
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#linker" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1114,7 +1136,10 @@ responsibility and can be used or tested in isolation.</p>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>      ↓
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>  Cache             write to ~/.gem/skills/&lt;gem&gt;/&lt;version&gt;/
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>      ↓
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  Linker            symlink .claude/skills/&lt;gem&gt; → cache dir
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>  Verifier          (optional, --verify) check the skill&#39;s code against the
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                    gem&#39;s actual source; correct mismatches in place
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>      ↓
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>  Linker            symlink .claude/skills/&lt;gem&gt; → cache dir
 </span></code></pre></div>
 <p><code>Runner.install_skill</code> is the glue that drives steps 2–5 for a single gem.
 The CLI commands (<code>gem skill</code>, <code>bundle skill</code>) fan it out concurrently across
@@ -1158,39 +1183,76 @@ markdown code fence wrapper the model adds despite being told not to.</p>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>└── &lt;gem_name&gt;/
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    └── &lt;version&gt;/
 </span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>        ├── SKILL.md
-</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        └── metadata.json   (gem, version, model, generated_at, sources)
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>        └── metadata.json   (gem, version, model, generated_at, sources,
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>                             and after --verify: a &quot;verification&quot; block with
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>                             source provenance + structured changes)
 </span></code></pre></div>
 <p><code>Cache::ROOT</code> is set once at load time from <code>GEMSKILL_DIR</code> (default: <code>~/.gem/skills</code>).</p>
+<p><code>read_metadata</code> / <code>write_skill</code> / <code>merge_metadata</code> let the verifier rewrite a
+cached skill and annotate its metadata without clobbering the original
+<code>generated_at</code>, <code>model</code>, or <code>sources</code>.</p>
+<h3 id="verifier">Verifier<a class="headerlink" href="#verifier" title="Permanent link">&para;</a></h3>
+<p><code>lib/gem/skill/verifier.rb</code></p>
+<p>Optional second pass, enabled by <code>--verify</code>. Generation synthesizes prose
+sources (README, changelog, examples) which are frequently stale or wrong about
+exact signatures. The verifier re-checks the generated skill against the gem's
+<strong>actual source code</strong> — the only source of truth — and corrects mismatched
+method signatures, default argument values, visibility, return values, and
+behavioral claims.</p>
+<div class="language-ruby highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="no">Verifier</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">gem_name</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">,</span><span class="w"> </span><span class="ss">model</span><span class="p">:)</span><span class="o">.</span><span class="n">verify</span><span class="p">(</span><span class="n">skill_content</span><span class="p">)</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="c1"># =&gt; Result(content:, changes:, changed:, verifiable:, source:, model:)</span>
+</span></code></pre></div>
+<p>Ground truth comes from <code>Fetcher#source_code</code> (the gem's <code>lib/**/*.rb</code>), and
+<code>Fetcher#source_manifest</code> records which files were examined. Whether the skill
+actually changed is decided by a <strong>deterministic diff</strong> of the content before and
+after — not by trusting the model's self-report — so the exit code is reliable.
+If no installed source is available, <code>verifiable</code> is false and the skill is left
+untouched.</p>
+<p>Each correction in <code>changes</code> is a structured, issue-ready Hash
+(<code>category</code>, <code>symbol</code>, <code>skill_section</code>, <code>source_location</code>, <code>was</code>, <code>now</code>,
+<code>detail</code>, <code>source_evidence</code>) — detailed enough to file a documentation bug
+against the gem. The Runner writes these, plus source provenance, into the
+<code>verification</code> block of <code>metadata.json</code>.</p>
 <h3 id="linker">Linker<a class="headerlink" href="#linker" title="Permanent link">&para;</a></h3>
 <p><code>lib/gem/skill/linker.rb</code></p>
-<p>Creates and manages directory symlinks in <code>.claude/skills/</code> inside a project:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>.claude/skills/&lt;gem_name&gt;  →  ~/.gem/skills/&lt;gem_name&gt;/&lt;version&gt;/
+<p>Creates and manages directory symlinks in the project's skill directory
+(default <code>.claude/skills/</code>, Claude Code's convention):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>&lt;project_dir&gt;/&lt;gem_name&gt;  →  ~/.gem/skills/&lt;gem_name&gt;/&lt;version&gt;/
 </span></code></pre></div>
-<p>Symlinks point to the <strong>version directory</strong>, not directly to <code>SKILL.md</code>.
-Claude Code discovers <code>SKILL.md</code> by reading inside the linked directory.</p>
+<p>The directory is <code>Linker.project_dir</code>, read from <code>GEMSKILL_PROJECT_DIR</code> each call
+(default <code>.claude/skills</code>). Codex users set it to <code>.agents</code> or <code>.codex</code> so
+<code>bundle skill</code> links into a Codex root instead. Symlinks point to the <strong>version
+directory</strong>, not directly to <code>SKILL.md</code>; the assistant discovers <code>SKILL.md</code> by
+reading inside the linked directory.</p>
 <p><code>Linker.prune_dead_links</code> removes any symlink whose target no longer exists
 in the cache (e.g. after <code>gem skill purge</code>).</p>
+<p>The cache itself is assistant-neutral. <code>SKILL.md</code> is a shared format; other
+assistants read it from their own roots. Note that linking only makes a skill
+<em>available</em> — some assistants (e.g. Codex) require it to be in the available-skills
+list or referenced explicitly before it's <em>active</em>.</p>
 <h3 id="runner">Runner<a class="headerlink" href="#runner" title="Permanent link">&para;</a></h3>
 <p><code>lib/gem/skill/runner.rb</code></p>
 <p>Shared core used by both CLI commands. Drives one gem through the
 cache-check → generate → link sequence:</p>
-<div class="language-ruby highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="no">Runner</span><span class="o">.</span><span class="n">install_skill</span><span class="p">(</span><span class="n">gem_name</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">,</span><span class="w"> </span><span class="n">spinner</span><span class="p">,</span><span class="w"> </span><span class="ss">force</span><span class="p">:,</span><span class="w"> </span><span class="ss">model</span><span class="p">:)</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># Returns nil on success, error message string on failure</span>
+<div class="language-ruby highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="no">Runner</span><span class="o">.</span><span class="n">install_skill</span><span class="p">(</span><span class="n">gem_name</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="p">,</span><span class="w"> </span><span class="n">spinner</span><span class="p">,</span><span class="w"> </span><span class="ss">force</span><span class="p">:,</span><span class="w"> </span><span class="ss">model</span><span class="p">:,</span><span class="w"> </span><span class="ss">verify</span><span class="p">:)</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># =&gt; Runner::Result(error:, verify_fixed:, change_count:)</span>
 </span></code></pre></div>
-<p>Returns the error message rather than raising, so the caller (the concurrent
-fiber) can record it without killing other in-flight fibers.</p>
+<p>Captures errors into the result rather than raising, so the caller (the
+concurrent fiber) can record them without killing other in-flight fibers. When
+<code>verify:</code> is set, the result's <code>verify_fixed</code> lets the CLI aggregate across all
+gems and exit <code>2</code> (<code>EXIT_VERIFY_FIXED</code>) if any skill was corrected.</p>
 <hr />
 <h2 id="concurrency">Concurrency<a class="headerlink" href="#concurrency" title="Permanent link">&para;</a></h2>
 <p>Both CLI commands use the <code>async</code> gem with <code>Async::Barrier</code>:</p>
-<div class="language-ruby highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="no">Async</span><span class="w"> </span><span class="k">do</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="n">barrier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">Async</span><span class="o">::</span><span class="no">Barrier</span><span class="o">.</span><span class="n">new</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span><span class="n">gems</span><span class="o">.</span><span class="n">each</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="o">|</span><span class="n">gem_name</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="o">|</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">    </span><span class="n">barrier</span><span class="o">.</span><span class="n">async</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="no">Runner</span><span class="o">.</span><span class="n">install_skill</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="k">end</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="n">barrier</span><span class="o">.</span><span class="n">wait</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">ensure</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="n">barrier</span><span class="o">.</span><span class="n">stop</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">end</span>
+<div class="language-ruby highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="no">Async</span><span class="w"> </span><span class="k">do</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="n">barrier</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="no">Async</span><span class="o">::</span><span class="no">Barrier</span><span class="o">.</span><span class="n">new</span>
+</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="n">gems</span><span class="o">.</span><span class="n">each</span><span class="w"> </span><span class="k">do</span><span class="w"> </span><span class="o">|</span><span class="n">gem_name</span><span class="p">,</span><span class="w"> </span><span class="n">version</span><span class="o">|</span>
+</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">    </span><span class="n">barrier</span><span class="o">.</span><span class="n">async</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="no">Runner</span><span class="o">.</span><span class="n">install_skill</span><span class="p">(</span><span class="o">...</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">  </span><span class="k">end</span>
+</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="n">barrier</span><span class="o">.</span><span class="n">wait</span>
+</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="k">ensure</span>
+</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="n">barrier</span><span class="o">.</span><span class="n">stop</span>
+</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="k">end</span>
 </span></code></pre></div>
 <p>Each gem gets its own fiber. Fibers yield to the event loop during network I/O
 (HTTP fetches, LLM API calls), so all gems make progress concurrently on a

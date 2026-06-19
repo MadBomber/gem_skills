@@ -1026,7 +1026,9 @@
 <h1 id="bundle-skill">bundle skill<a class="headerlink" href="#bundle-skill" title="Permanent link">&para;</a></h1>
 <p>The <code>bundle skill</code> command is project-aware: it reads <code>Gemfile.lock</code> to
 determine which gems and versions are in use, generates skills for all of them,
-and links the results into <code>.claude/skills/</code> in the project root.</p>
+and links the results into <code>.claude/skills/</code> (Claude Code's skill directory) in
+the project root. The generated <code>SKILL.md</code> files are a shared format that other
+assistants read too — see <a href="../../skill-files/#using-with-other-assistants">Using with other assistants</a>.</p>
 <h2 id="global-options">Global options<a class="headerlink" href="#global-options" title="Permanent link">&para;</a></h2>
 <p>These flags work without a subcommand:</p>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bundle<span class="w"> </span>skill<span class="w"> </span>--version<span class="w">    </span><span class="c1"># print installed version and exit</span>
@@ -1058,6 +1060,10 @@ and links the results into <code>.claude/skills/</code> in the project root.</p>
 <td>Regenerate even if skills are already cached</td>
 </tr>
 <tr>
+<td><code>--verify</code></td>
+<td>Verify generated skills against each gem's source and fix mismatches (exit <code>2</code> if any fixes applied)</td>
+</tr>
+<tr>
 <td><code>--model MODEL</code></td>
 <td>LLM model to use (overrides <code>GEMSKILL_MODEL</code>)</td>
 </tr>
@@ -1082,13 +1088,17 @@ and links the results into <code>.claude/skills/</code> in the project root.</p>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>  ✓ zeitwerk 2.8.2 done
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>  ✓ ruby_llm 1.16.0 done
 </span></code></pre></div>
-<p>After completion, each skill is symlinked into <code>.claude/skills/</code>:</p>
+<p>After completion, each skill is symlinked into the project skill directory
+(<code>.claude/skills/</code> by default; set
+<a href="../../configuration/#gemskill_project_dir"><code>GEMSKILL_PROJECT_DIR</code></a> to change it,
+e.g. <code>.agents</code> for Codex):</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>your-project/.claude/skills/
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── rake     →  ~/.gem/skills/rake/13.4.2/
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>├── ruby_llm →  ~/.gem/skills/ruby_llm/1.16.0/
 </span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>└── zeitwerk →  ~/.gem/skills/zeitwerk/2.8.2/
 </span></code></pre></div>
-<p>Claude Code automatically reads <code>SKILL.md</code> from each linked directory.</p>
+<p>The assistant automatically reads <code>SKILL.md</code> from each linked directory (Claude
+Code reads <code>.claude/skills/</code>; other assistants use their own roots).</p>
 <hr />
 <h3 id="bundle-skill-refresh"><code>bundle skill refresh</code><a class="headerlink" href="#bundle-skill-refresh" title="Permanent link">&para;</a></h3>
 <p>Re-sync <code>.claude/skills/</code> after <code>bundle update</code>.</p>

@@ -647,6 +647,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#verifying-against-source-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying against source (--verify)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gem-skill-version" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -883,6 +894,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#verifying-against-source-verify" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Verifying against source (--verify)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gem-skill-version" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1045,6 +1067,10 @@ It works with any installed gem regardless of project context.</p>
 <td>Regenerate even if a skill is already cached</td>
 </tr>
 <tr>
+<td><code>--verify</code></td>
+<td>After generating, verify the skill's code against the gem's actual source and fix mismatches</td>
+</tr>
+<tr>
 <td><code>--model MODEL</code>, <code>-m MODEL</code></td>
 <td>LLM model to use (overrides <code>GEMSKILL_MODEL</code>)</td>
 </tr>
@@ -1063,9 +1089,48 @@ It works with any installed gem regardless of project context.</p>
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
 </span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Force regeneration with a specific model</span>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>rails<span class="w"> </span>--force<span class="w"> </span>--model<span class="w"> </span>claude-opus-4-8
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Generate, then verify the result against the gem&#39;s source code</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>tty-spinner<span class="w"> </span>--verify
 </span></code></pre></div>
 <p>If a gem is not installed locally, gem-skill will install it automatically
 before generating the skill.</p>
+<h3 id="verifying-against-source-verify">Verifying against source (<code>--verify</code>)<a class="headerlink" href="#verifying-against-source-verify" title="Permanent link">&para;</a></h3>
+<p>The generation pass synthesizes a skill from a gem's README, changelog, and
+examples. That prose is sometimes stale or wrong about exact method signatures,
+default argument values, and behavior. <code>--verify</code> adds a second pass that checks
+the generated skill against the gem's <strong>actual installed source code</strong> (the only
+source of truth) and rewrites anything the source contradicts.</p>
+<p>Verification requires the gem to be installed locally (it reads <code>lib/**/*.rb</code>).
+If no source is available, the skill is left untouched.</p>
+<p><strong>Exit status</strong> (so CI can detect README/source drift):</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>0</code></td>
+<td>Success — skill was clean, or <code>--verify</code> not used</td>
+</tr>
+<tr>
+<td><code>1</code></td>
+<td>Error</td>
+</tr>
+<tr>
+<td><code>2</code></td>
+<td><code>--verify</code> found and corrected problems</td>
+</tr>
+</tbody>
+</table>
+<p>Either way, <code>metadata.json</code> gains a <code>verification</code> block recording that the gem's
+actual source was consulted, which files were examined, and — when fixes were
+applied — an array of structured, issue-ready corrections (affected symbol,
+source location, what the skill said vs. the truth, and the proving source
+snippet). See <a href="cache.md#metadatajson">Cache layout</a> for the full schema.</p>
 <hr />
 <h3 id="gem-skill-version"><code>gem skill --version</code><a class="headerlink" href="#gem-skill-version" title="Permanent link">&para;</a></h3>
 <p>Print the installed gem-skill version and exit.</p>

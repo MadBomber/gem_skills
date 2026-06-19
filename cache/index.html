@@ -800,6 +800,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Project symlinks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#other-assistants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other assistants
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -968,6 +985,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Project symlinks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#other-assistants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other assistants
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1049,8 +1083,9 @@
 projects pinning different versions of the same gem each get the correct skill.</p>
 <h2 id="files">Files<a class="headerlink" href="#files" title="Permanent link">&para;</a></h2>
 <h3 id="skillmd"><code>SKILL.md</code><a class="headerlink" href="#skillmd" title="Permanent link">&para;</a></h3>
-<p>The generated skill file. Contains structured documentation tailored for
-Claude Code. See <a href="../skill-files/">Skill Files</a> for the format.</p>
+<p>The generated skill file. Contains structured documentation for AI coding
+assistants (Claude Code, OpenAI Codex, and others). See
+<a href="../skill-files/">Skill Files</a> for the format.</p>
 <h3 id="metadatajson"><code>metadata.json</code><a class="headerlink" href="#metadatajson" title="Permanent link">&para;</a></h3>
 <p>Stores provenance information:</p>
 <div class="language-json highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="p">{</span>
@@ -1061,41 +1096,104 @@ Claude Code. See <a href="../skill-files/">Skill Files</a> for the format.</p>
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">  </span><span class="nt">&quot;sources&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;readme&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;changelog&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;rubygems&quot;</span><span class="p">]</span>
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="p">}</span>
 </span></code></pre></div>
+<p>When a skill is generated with <code>--verify</code>, a <code>verification</code> block is added that
+records that the gem's actual source code was consulted, exactly which files were
+examined, and the issue-ready corrections that resulted:</p>
+<div class="language-json highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="p">{</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&quot;gem_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;tty-spinner&quot;</span><span class="p">,</span>
+</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">  </span><span class="nt">&quot;version&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;0.9.3&quot;</span><span class="p">,</span>
+</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">  </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-5.5&quot;</span><span class="p">,</span>
+</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">&quot;generated_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-06-17T10:23:45Z&quot;</span><span class="p">,</span>
+</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">  </span><span class="nt">&quot;sources&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;readme&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;changelog&quot;</span><span class="p">],</span>
+</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nt">&quot;verification&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="nt">&quot;verified&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">&quot;verified_at&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-06-19T14:02:11Z&quot;</span><span class="p">,</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">    </span><span class="nt">&quot;model&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gpt-5.5&quot;</span><span class="p">,</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">&quot;used_source_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">&quot;source&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">      </span><span class="nt">&quot;files&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;lib/tty/spinner.rb&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lib/tty/spinner/multi.rb&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;lib/tty/spinner/formats.rb&quot;</span><span class="p">],</span>
+</span><span id="__span-3-14"><a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">      </span><span class="nt">&quot;file_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">3</span><span class="p">,</span>
+</span><span id="__span-3-15"><a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">      </span><span class="nt">&quot;chars&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">26452</span><span class="p">,</span>
+</span><span id="__span-3-16"><a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">      </span><span class="nt">&quot;truncated&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+</span><span id="__span-3-17"><a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="w">    </span><span class="p">},</span>
+</span><span id="__span-3-18"><a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">    </span><span class="nt">&quot;fixed&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+</span><span id="__span-3-19"><a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="nt">&quot;change_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+</span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">    </span><span class="nt">&quot;changes&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+</span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">      </span><span class="p">{</span>
+</span><span id="__span-3-22"><a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">        </span><span class="nt">&quot;category&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;default_value&quot;</span><span class="p">,</span>
+</span><span id="__span-3-23"><a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">        </span><span class="nt">&quot;symbol&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;TTY::Spinner#stop&quot;</span><span class="p">,</span>
+</span><span id="__span-3-24"><a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="w">        </span><span class="nt">&quot;skill_section&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Core API&quot;</span><span class="p">,</span>
+</span><span id="__span-3-25"><a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a><span class="w">        </span><span class="nt">&quot;source_location&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;lib/tty/spinner.rb:387&quot;</span><span class="p">,</span>
+</span><span id="__span-3-26"><a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="w">        </span><span class="nt">&quot;was&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;stop(message = nil)&quot;</span><span class="p">,</span>
+</span><span id="__span-3-27"><a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="w">        </span><span class="nt">&quot;now&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;stop(message = &#39;&#39;)&quot;</span><span class="p">,</span>
+</span><span id="__span-3-28"><a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="w">        </span><span class="nt">&quot;detail&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Default argument is an empty string, not nil; the README implied nil.&quot;</span><span class="p">,</span>
+</span><span id="__span-3-29"><a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="w">        </span><span class="nt">&quot;source_evidence&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;def stop(stop_message = &#39;&#39;)&quot;</span>
+</span><span id="__span-3-30"><a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">      </span><span class="p">}</span>
+</span><span id="__span-3-31"><a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a><span class="w">    </span><span class="p">]</span>
+</span><span id="__span-3-32"><a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">  </span><span class="p">}</span>
+</span><span id="__span-3-33"><a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="p">}</span>
+</span></code></pre></div>
+<p>Each entry in <code>changes</code> is detailed enough to open a documentation issue against
+the gem: it names the affected symbol, where the skill was wrong, what it claimed
+versus the truth, and the source snippet that proves it. When source isn't
+available locally, <code>verification</code> instead records <code>"verified": false</code>,
+<code>"used_source_code": false</code>, and a <code>"skipped_reason"</code>.</p>
 <h2 id="cache-commands">Cache commands<a class="headerlink" href="#cache-commands" title="Permanent link">&para;</a></h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># List everything in the cache</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>gem<span class="w"> </span>skill<span class="w"> </span>list
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="c1"># Remove a specific version</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>gem<span class="w"> </span>skill<span class="w"> </span>purge<span class="w"> </span>faraday<span class="w"> </span><span class="m">2</span>.12.0
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="c1"># Remove all versions of a gem</span>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>gem<span class="w"> </span>skill<span class="w"> </span>purge<span class="w"> </span>faraday<span class="w"> </span>--all
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># List everything in the cache</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>gem<span class="w"> </span>skill<span class="w"> </span>list
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="c1"># Remove a specific version</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>gem<span class="w"> </span>skill<span class="w"> </span>purge<span class="w"> </span>faraday<span class="w"> </span><span class="m">2</span>.12.0
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># Remove all versions of a gem</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>gem<span class="w"> </span>skill<span class="w"> </span>purge<span class="w"> </span>faraday<span class="w"> </span>--all
 </span></code></pre></div>
 <h2 id="sharing-the-cache">Sharing the cache<a class="headerlink" href="#sharing-the-cache" title="Permanent link">&para;</a></h2>
 <p>You can share a skill cache across machines by pointing <code>GEMSKILL_DIR</code> at a
 shared location:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Team-shared network drive</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMSKILL_DIR</span><span class="o">=</span><span class="s2">&quot;/Volumes/team-shared/gem-skills&quot;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Team-shared network drive</span>
+</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMSKILL_DIR</span><span class="o">=</span><span class="s2">&quot;/Volumes/team-shared/gem-skills&quot;</span>
 </span></code></pre></div>
 <p>All machines with the same <code>GEMSKILL_DIR</code> will read and write to the same cache.
 Skills generated on one machine are immediately available on others.</p>
 <h2 id="project-symlinks">Project symlinks<a class="headerlink" href="#project-symlinks" title="Permanent link">&para;</a></h2>
-<p>Projects don't store skills locally — they hold symlinks into the global cache:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>your-project/.claude/skills/
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>├── faraday  →  ~/.gem/skills/faraday/2.14.3/
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>└── zeitwerk →  ~/.gem/skills/zeitwerk/2.8.2/
+<p>Projects don't store skills locally — they hold symlinks into the global cache.
+<code>bundle skill</code> writes these into the directory named by
+<a href="../configuration/#gemskill_project_dir"><code>GEMSKILL_PROJECT_DIR</code></a>, which defaults
+to <code>.claude/skills/</code> (Claude Code's convention):</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>your-project/.claude/skills/
+</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>├── faraday  →  ~/.gem/skills/faraday/2.14.3/
+</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>└── zeitwerk →  ~/.gem/skills/zeitwerk/2.8.2/
 </span></code></pre></div>
-<p>Each symlink points to the <strong>version directory</strong>. Claude Code reads <code>SKILL.md</code>
-from inside the linked directory.</p>
+<p>Each symlink points to the <strong>version directory</strong>, and the assistant reads
+<code>SKILL.md</code> from inside the linked directory.</p>
 <p><code>bundle skill refresh</code> updates symlinks when versions change after <code>bundle update</code>.
 <code>bundle skill list</code> shows the status of all current symlinks.</p>
+<h3 id="other-assistants">Other assistants<a class="headerlink" href="#other-assistants" title="Permanent link">&para;</a></h3>
+<p><code>SKILL.md</code> is a shared format and the cache is assistant-neutral. Assistants
+other than Claude Code look in their own skill roots — for example, OpenAI Codex
+uses <code>~/.codex/skills</code> and the vendor-neutral <code>~/.agents/skills</code> globally, or
+project-local <code>.agents/</code> / <code>.codex/</code>.</p>
+<p>For project links, set <code>GEMSKILL_PROJECT_DIR</code> so <code>bundle skill</code> writes straight
+into the right directory:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMSKILL_PROJECT_DIR</span><span class="o">=</span><span class="s2">&quot;.agents&quot;</span>
+</span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install
+</span></code></pre></div>
+<p>For a global, cross-project link, symlink a cached version directory into the
+assistant's global root:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-8-1"><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>ln<span class="w"> </span>-s<span class="w"> </span>~/.gem/skills/faraday/2.14.3<span class="w"> </span>~/.agents/skills/faraday
+</span></code></pre></div>
+<p>Note that linking only makes a skill <em>available</em>; some assistants (e.g. Codex)
+won't <em>activate</em> it unless it's in the session's available-skills list or you
+reference it explicitly. See
+<a href="../skill-files/#using-with-other-assistants">Using with other assistants</a>.</p>
 <h2 id="regenerating-skills">Regenerating skills<a class="headerlink" href="#regenerating-skills" title="Permanent link">&para;</a></h2>
 <p>Skills do not auto-expire. Regenerate explicitly when you want updated content:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Regenerate one gem</span>
-</span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>faraday<span class="w"> </span>--force
-</span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
-</span><span id="__span-6-4"><a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="c1"># Regenerate all project gems with a better model</span>
-</span><span id="__span-6-5"><a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>--model<span class="w"> </span>claude-opus-4-8
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-9-1"><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Regenerate one gem</span>
+</span><span id="__span-9-2"><a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>faraday<span class="w"> </span>--force
+</span><span id="__span-9-3"><a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
+</span><span id="__span-9-4"><a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Regenerate all project gems with a better model</span>
+</span><span id="__span-9-5"><a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>--force<span class="w"> </span>--model<span class="w"> </span>claude-opus-4-8
 </span></code></pre></div>
 
 

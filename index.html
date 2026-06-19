@@ -899,9 +899,10 @@
   <tr>
     <td width="40%"><img src="assets/images/gem-skill.jpg" alt="gem-skill logo" style="width:100%;display:block;"></td>
     <td width="60%">
-      Generate Claude Code skill files from Ruby gem
-      documentation and caches them globally so every project that uses a gem
-      can share the same pre-built knowledge.<br><br>
+      Generate <code>SKILL.md</code> files for AI coding assistants
+      (Claude Code, OpenAI Codex, and others) from Ruby gem documentation,
+      and cache them globally so every project that uses a gem can share the
+      same pre-built knowledge.<br><br>
       <strong><a href="https://madbomber.github.io/gem-skill">Full documentation →</a></strong>
     </td>
   </tr>
@@ -909,13 +910,14 @@
 </p>
 
 <h2 id="the-problem-it-solves">The problem it solves<a class="headerlink" href="#the-problem-it-solves" title="Permanent link">&para;</a></h2>
-<p>Every time Claude Code encounters a gem it hasn't seen in the current context,
-it re-reads the README, scans examples, and figures out the API. That costs
-tokens and time — and the result evaporates when the conversation ends.</p>
+<p>Every time an AI coding assistant encounters a gem it hasn't seen in the current
+context, it re-reads the README, scans examples, and figures out the API. That
+costs tokens and time — and the result evaporates when the conversation ends.</p>
 <p><code>gem-skill</code> runs that pipeline once, offline, and stores the output as a
-<code>SKILL.md</code> in <code>~/.gem/skills</code>. Projects symlink to the cached version, so
-Claude has accurate, version-specific knowledge about each gem without
-repeating the ingestion work.</p>
+<code>SKILL.md</code> in <code>~/.gem/skills</code>. Projects symlink to the cached version, so your
+assistant has accurate, version-specific knowledge about each gem without
+repeating the ingestion work. <code>SKILL.md</code> is a shared format — Claude Code,
+OpenAI Codex, and other assistants all read it.</p>
 <h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># 1. Install</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>gem<span class="w"> </span>install<span class="w"> </span>gem-skill
@@ -941,7 +943,8 @@ repeating the ingestion work.</p>
 </span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>        ↓
 </span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>   Linker creates .claude/skills/&lt;gem&gt; → cache dir
 </span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>        ↓
-</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>   Claude Code reads SKILL.md automatically
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>   The assistant reads SKILL.md automatically
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>   (Claude Code from .claude/skills/; other assistants from their own roots)
 </span></code></pre></div>
 <p>All concurrent work is handled by async fibers — multiple gems are processed
 simultaneously with live TTY spinner progress.</p>
@@ -952,7 +955,8 @@ simultaneously with live TTY spinner progress.</p>
 <li><strong>Concurrent</strong> — all LLM calls run concurrently via async fibers</li>
 <li><strong>Two interfaces</strong> — <code>gem skill</code> for global cache management, <code>bundle skill</code> for project-aware linking</li>
 <li><strong>Auto-install</strong> — <code>gem install --with-skill</code> generates skills during normal gem installation</li>
-<li><strong>Configurable</strong> — <code>GEMSKILL_DIR</code> and <code>GEMSKILL_MODEL</code> environment variables</li>
+<li><strong>Configurable</strong> — <code>GEMSKILL_DIR</code>, <code>GEMSKILL_PROJECT_DIR</code>, and <code>GEMSKILL_MODEL</code> environment variables</li>
+<li><strong>Multi-assistant</strong> — <code>SKILL.md</code> works with Claude Code, OpenAI Codex, and others; <code>GEMSKILL_PROJECT_DIR</code> points project links at the right directory</li>
 </ul>
 
 

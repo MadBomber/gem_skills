@@ -568,6 +568,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gemskill_project_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GEMSKILL_PROJECT_DIR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gemskill_model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -878,6 +889,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#gemskill_project_dir" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GEMSKILL_PROJECT_DIR
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#gemskill_model" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1026,6 +1048,64 @@ Set at least one provider API key before running any <code>install</code> comman
 </table>
 <p>Useful for sharing a skill cache across machines via a network drive, or for
 keeping skills in a non-standard location.</p>
+<h3 id="gemskill_project_dir"><code>GEMSKILL_PROJECT_DIR</code><a class="headerlink" href="#gemskill_project_dir" title="Permanent link">&para;</a></h3>
+<p>The project-relative directory where <code>bundle skill</code> writes its symlinks into the
+cache. Change it to match whichever assistant you use.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Default</strong></td>
+<td><code>.claude/skills</code> (Claude Code)</td>
+</tr>
+<tr>
+<td><strong>Example</strong></td>
+<td><code>export GEMSKILL_PROJECT_DIR=".agents"</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>SKILL.md</code> is a shared format, but each assistant looks for skills in its own
+project directory:</p>
+<table>
+<thead>
+<tr>
+<th>Assistant</th>
+<th>Suggested <code>GEMSKILL_PROJECT_DIR</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Code</td>
+<td><code>.claude/skills</code> (default)</td>
+</tr>
+<tr>
+<td>OpenAI Codex</td>
+<td><code>.agents</code> or <code>.codex</code></td>
+</tr>
+</tbody>
+</table>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Claude Code (default — no need to set anything)</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># OpenAI Codex — link into a Codex project root instead</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMSKILL_PROJECT_DIR</span><span class="o">=</span><span class="s2">&quot;.agents&quot;</span>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install<span class="w">        </span><span class="c1"># symlinks now land in .agents/</span>
+</span></code></pre></div>
+<p>A blank or unset value falls back to the <code>.claude/skills</code> default.</p>
+<div class="admonition note">
+<p class="admonition-title">Availability is not activation</p>
+<p>Setting <code>GEMSKILL_PROJECT_DIR</code> controls <em>where the symlinks are written</em>. It
+does not change how an assistant decides a skill is active. Claude Code
+activates every <code>SKILL.md</code> under <code>.claude/skills/</code> automatically; other
+assistants (e.g. Codex) may require the skill to be in the session's
+available-skills list or referenced explicitly. See
+<a href="../skill-files/#using-with-other-assistants">Using with other assistants</a>.</p>
+</div>
 <h3 id="gemskill_model"><code>GEMSKILL_MODEL</code><a class="headerlink" href="#gemskill_model" title="Permanent link">&para;</a></h3>
 <p>Controls which LLM model is used when generating skills.</p>
 <table>
@@ -1050,8 +1130,8 @@ keeping skills in a non-standard location.</p>
 invocation only.</p>
 <h2 id="recommended-shell-configuration">Recommended shell configuration<a class="headerlink" href="#recommended-shell-configuration" title="Permanent link">&para;</a></h2>
 <p>Add to your <code>~/.zshrc</code> or <code>~/.bashrc</code>:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;sk-ant-...&quot;</span>
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMSKILL_MODEL</span><span class="o">=</span><span class="s2">&quot;claude-sonnet-4-6&quot;</span><span class="w">   </span><span class="c1"># or whichever model you prefer</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s2">&quot;sk-ant-...&quot;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMSKILL_MODEL</span><span class="o">=</span><span class="s2">&quot;claude-sonnet-4-6&quot;</span><span class="w">   </span><span class="c1"># or whichever model you prefer</span>
 </span></code></pre></div>
 <h2 id="model-selection-guidance">Model selection guidance<a class="headerlink" href="#model-selection-guidance" title="Permanent link">&para;</a></h2>
 <table>
@@ -1081,8 +1161,8 @@ invocation only.</p>
 </tbody>
 </table>
 <p>Pass <code>--model MODEL</code> to any install command to override for one run:</p>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>rails<span class="w"> </span>--model<span class="w"> </span>claude-opus-4-8
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>--model<span class="w"> </span>claude-haiku-4-5
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>rails<span class="w"> </span>--model<span class="w"> </span>claude-opus-4-8
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>--model<span class="w"> </span>claude-haiku-4-5
 </span></code></pre></div>
 
 

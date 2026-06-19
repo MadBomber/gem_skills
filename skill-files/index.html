@@ -745,10 +745,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-claude-does-with-it" class="md-nav__link">
+  <a href="#what-an-assistant-does-with-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What Claude does with it
+        What an assistant does with it
       
     </span>
   </a>
@@ -782,6 +782,17 @@
     <span class="md-ellipsis">
       
         Version specificity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-with-other-assistants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using with other assistants
       
     </span>
   </a>
@@ -836,10 +847,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#what-claude-does-with-it" class="md-nav__link">
+  <a href="#what-an-assistant-does-with-it" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What Claude does with it
+        What an assistant does with it
       
     </span>
   </a>
@@ -873,6 +884,17 @@
     <span class="md-ellipsis">
       
         Version specificity
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-with-other-assistants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Using with other assistants
       
     </span>
   </a>
@@ -921,9 +943,11 @@
 
 
 <h1 id="skill-files">Skill Files<a class="headerlink" href="#skill-files" title="Permanent link">&para;</a></h1>
-<p>A <code>SKILL.md</code> is a structured Markdown document that gives Claude Code deep,
-practical knowledge about a Ruby gem. Claude reads it automatically when it is
-present in <code>.claude/skills/</code>.</p>
+<p>A <code>SKILL.md</code> is a structured Markdown document that gives an AI coding assistant
+deep, practical knowledge about a Ruby gem. It's a shared format — assistants
+such as Claude Code and OpenAI Codex read it automatically when it is present in
+the skills directory they look in (Claude Code uses <code>.claude/skills/</code>; see
+<a href="#using-with-other-assistants">Using the cache with other assistants</a>).</p>
 <h2 id="format">Format<a class="headerlink" href="#format" title="Permanent link">&para;</a></h2>
 <p>Every generated skill starts with a top-level heading identifying the gem and
 version, then covers seven sections:</p>
@@ -950,11 +974,12 @@ version, then covers seven sections:</p>
 </span><span id="__span-0-21"><a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="gu">## Testing</span>
 </span><span id="__span-0-22"><a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>How to test code that uses this gem: mocks, fakes, fixtures, VCR patterns.
 </span></code></pre></div>
-<h2 id="what-claude-does-with-it">What Claude does with it<a class="headerlink" href="#what-claude-does-with-it" title="Permanent link">&para;</a></h2>
-<p>When Claude Code opens a project containing <code>.claude/skills/</code>, it reads every
-<code>SKILL.md</code> it finds. This means:</p>
+<h2 id="what-an-assistant-does-with-it">What an assistant does with it<a class="headerlink" href="#what-an-assistant-does-with-it" title="Permanent link">&para;</a></h2>
+<p>When an assistant opens a project whose skills directory contains <code>SKILL.md</code>
+files, it reads every one it finds (Claude Code, for instance, reads everything
+in <code>.claude/skills/</code>). This means:</p>
 <ul>
-<li>Claude knows the correct API for the exact version you're using</li>
+<li>The assistant knows the correct API for the exact version you're using</li>
 <li>No token cost re-deriving usage from READMEs mid-conversation</li>
 <li>The knowledge persists across conversation turns</li>
 <li>Multiple gems can be in scope simultaneously</li>
@@ -982,7 +1007,55 @@ used. For gems with poor upstream documentation, results will reflect that.</p>
 <h2 id="version-specificity">Version specificity<a class="headerlink" href="#version-specificity" title="Permanent link">&para;</a></h2>
 <p>Skills are cached per version. <code>faraday 2.12.0</code> and <code>faraday 2.14.3</code> each get
 their own <code>SKILL.md</code>. Symlinks in <code>.claude/skills/</code> point to the version
-matching your <code>Gemfile.lock</code>, so Claude always has the right version context.</p>
+matching your <code>Gemfile.lock</code>, so the assistant always has the right version
+context.</p>
+<h2 id="using-with-other-assistants">Using with other assistants<a class="headerlink" href="#using-with-other-assistants" title="Permanent link">&para;</a></h2>
+<p><code>SKILL.md</code> is not specific to one assistant. The <code>~/.gem/skills</code> cache is
+assistant-neutral; <code>bundle skill</code> links skills into <code>.claude/skills/</code>, which
+Claude Code reads automatically. Other assistants discover skills in their own
+roots:</p>
+<table>
+<thead>
+<tr>
+<th>Assistant</th>
+<th>Global roots</th>
+<th>Project-local roots</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Code</td>
+<td><code>~/.claude/skills/</code></td>
+<td><code>.claude/skills/</code></td>
+</tr>
+<tr>
+<td>OpenAI Codex</td>
+<td><code>~/.codex/skills</code>, <code>~/.agents/skills</code></td>
+<td><code>.agents/</code>, <code>.codex/</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Project-local (recommended):</strong> point <code>bundle skill</code> at the right directory with
+the <code>GEMSKILL_PROJECT_DIR</code> environment variable (default <code>.claude/skills</code>):</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">GEMSKILL_PROJECT_DIR</span><span class="o">=</span><span class="s2">&quot;.agents&quot;</span><span class="w">   </span><span class="c1"># or &quot;.codex&quot;</span>
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>bundle<span class="w"> </span>skill<span class="w"> </span>install<span class="w">                    </span><span class="c1"># symlinks now land in .agents/</span>
+</span></code></pre></div>
+<p>See <a href="../configuration/#gemskill_project_dir"><code>GEMSKILL_PROJECT_DIR</code></a> for the full
+table of suggested values.</p>
+<p><strong>Global:</strong> to share cached skills across all projects for an assistant, symlink
+a cached version directory into its global root:</p>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>ln<span class="w"> </span>-s<span class="w"> </span>~/.gem/skills/faraday/2.14.3<span class="w"> </span>~/.agents/skills/faraday
+</span></code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">Availability is not the same as activation</p>
+<p>Assistants differ in how a present <code>SKILL.md</code> becomes active. <strong>Claude Code</strong>
+treats every <code>SKILL.md</code> under <code>.claude/skills/</code> as active automatically.
+<strong>OpenAI Codex</strong> does <em>not</em> auto-activate a skill just because the file
+exists — it must appear in the session's available-skills list, or you must
+explicitly point Codex at it. So linking a skill into a Codex root makes it
+<em>available</em> but may not make it <em>active</em> on its own; check your assistant's
+skill-discovery rules.</p>
+</div>
 
 
 
