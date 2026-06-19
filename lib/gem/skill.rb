@@ -3,6 +3,7 @@
 require_relative "skill/version"
 require_relative "skill/cache"
 require_relative "skill/fetcher"
+require_relative "skill/frontmatter"
 require_relative "skill/generator"
 require_relative "skill/verifier"
 require_relative "skill/linker"

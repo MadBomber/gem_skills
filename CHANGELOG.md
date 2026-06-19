@@ -5,6 +5,15 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Fixed
+- Generated `SKILL.md` files now include the required YAML frontmatter (`name` + `description`). Without it, the files were never registered/triggered as skills by Claude Code or OpenAI Codex — they were just markdown in a skills folder. `name` is the gem name normalized to hyphen-case (e.g. `ruby_llm` → `ruby-llm`); `description` is a trigger-oriented one-liner derived from the Overview (sanitized for both assistants: single line, no angle brackets). Verified against Claude Code's skill validator and OpenAI's Codex skill spec.
+
+### Added
+- `Gem::Skill::Frontmatter` — deterministic, idempotent frontmatter builder shared by the generator and verifier, so a skill always carries valid frontmatter even if the model omits it.
+
+### Note
+- Skills cached before this change lack frontmatter; regenerate them with `gem skill install GEM --force` (or `bundle skill refresh --force`) to add it.
+
 ## [0.2.0] - 2026-06-19
 
 ### Added

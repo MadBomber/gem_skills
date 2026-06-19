@@ -73,6 +73,7 @@ module Gem::Skill
       raise Error, "No documentation found for #{gem_name} #{version}" if sources.empty?
 
       skill_content = block ? call_llm_streaming(sources, &block) : call_llm(sources)
+      skill_content = Frontmatter.build(gem_name, version, skill_content)
       Cache.store(gem_name, version, skill_content, { sources: sources.keys.map(&:to_s), model: model })
       skill_content
     rescue RubyLLM::Error => e

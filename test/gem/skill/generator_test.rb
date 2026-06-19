@@ -24,9 +24,27 @@ class GeneratorTest < Minitest::Test
   def test_generate_calls_llm_and_caches_result
     with_stubs(sources: FAKE_SOURCES, skill: FAKE_SKILL) do
       result = Gem::Skill::Generator.new(@gem_name, @version).generate
-      assert_equal FAKE_SKILL, result
+      assert result.start_with?("---\n"), "generated skill should start with frontmatter"
+      assert_includes result, FAKE_SKILL, "original body should be preserved after the frontmatter"
       assert Gem::Skill::Cache.cached?(@gem_name, @version)
-      assert_equal FAKE_SKILL, Gem::Skill::Cache.read(@gem_name, @version)
+      assert_equal result, Gem::Skill::Cache.read(@gem_name, @version)
+    end
+  end
+
+  def test_generate_adds_frontmatter_with_name_and_description
+    with_stubs(sources: FAKE_SOURCES, skill: FAKE_SKILL) do
+      result = Gem::Skill::Generator.new(@gem_name, @version).generate
+      fm = result[/\A---\n(.*?)\n---/m, 1]
+      assert fm, "expected a frontmatter block"
+      assert_match(/^name:\s*chunker-ruby$/, fm)
+      assert_match(/^description:\s*".+"$/, fm)
+    end
+  end
+
+  def test_generate_hyphenates_underscore_gem_names_in_frontmatter
+    with_stubs(sources: FAKE_SOURCES, skill: FAKE_SKILL) do
+      result = Gem::Skill::Generator.new("ruby_llm", "1.0.0").generate
+      assert_match(/^name:\s*ruby-llm$/, result[/\A---\n(.*?)\n---/m, 1])
     end
   end
 
@@ -44,7 +62,8 @@ class GeneratorTest < Minitest::Test
     Gem::Skill::Cache.store(@gem_name, @version, "stale content")
     with_stubs(sources: FAKE_SOURCES, skill: FAKE_SKILL) do
       result = Gem::Skill::Generator.new(@gem_name, @version).generate(force: true)
-      assert_equal FAKE_SKILL, result
+      assert_includes result, FAKE_SKILL
+      refute_includes result, "stale content"
     end
   end
 

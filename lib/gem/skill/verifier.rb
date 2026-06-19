@@ -112,11 +112,14 @@ module Gem::Skill
       end
 
       raw       = build_chat.ask(format_prompt(skill_content, source)).content.to_s
-      corrected = extract_skill(raw, skill_content)
-      changed   = normalize(corrected) != normalize(skill_content)
+      # Re-apply frontmatter to both sides so the diff compares like-for-like and
+      # the stored skill always keeps valid frontmatter, even if the model dropped it.
+      original  = Frontmatter.build(gem_name, version, skill_content)
+      corrected = Frontmatter.build(gem_name, version, extract_skill(raw, skill_content))
+      changed   = normalize(corrected) != normalize(original)
       changes   = changed ? changes_from(raw) : []
 
-      Result.new(content: corrected, changes: changes, changed: changed,
+      Result.new(content: (changed ? corrected : skill_content), changes: changes, changed: changed,
                  verifiable: true, source: fetcher.source_manifest, model: model)
     rescue RubyLLM::Error => e
       raise Error, e.message

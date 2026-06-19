@@ -55,7 +55,8 @@ class VerifierTest < Minitest::Test
         result = verifier.verify(ORIGINAL)
         assert result.verifiable
         assert result.changed?
-        assert_equal corrected, result.content
+        assert result.content.start_with?("---\n"), "verified content should carry frontmatter"
+        assert_includes result.content, "stop(message = '')"
         assert_equal 1, result.changes.size
         assert_equal change, result.changes.first
         assert_equal MANIFEST, result.source

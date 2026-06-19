@@ -8,10 +8,16 @@ the skills directory they look in (Claude Code uses `.claude/skills/`; see
 
 ## Format
 
-Every generated skill starts with a top-level heading identifying the gem and
-version, then covers seven sections:
+Every generated skill begins with **YAML frontmatter** — the `name` and
+`description` that make it discoverable as an Agent Skill — followed by a
+top-level heading and seven sections:
 
 ```markdown
+---
+name: faraday
+description: "HTTP client library for Ruby with pluggable adapters and middleware; use when making HTTP requests... (faraday v2.14.3)"
+---
+
 # faraday v2.14.3
 
 ## Overview
@@ -35,6 +41,20 @@ Initializer patterns, environment variables, defaults worth knowing.
 ## Testing
 How to test code that uses this gem: mocks, fakes, fixtures, VCR patterns.
 ```
+
+### Frontmatter
+
+The frontmatter is what registers the file as a skill — both Claude Code and
+OpenAI Codex require it, and the `description` is the text loaded into the
+assistant's context to decide *when* the skill applies. gem-skill generates it
+deterministically:
+
+- **`name`** — the gem name normalized to hyphen-case (lowercase letters,
+  digits, hyphens). For example `ruby_llm` becomes `ruby-llm`, since underscores
+  aren't allowed in skill names.
+- **`description`** — a one-line, trigger-oriented summary derived from the
+  Overview, with the version appended, sanitized to satisfy both assistants
+  (single line, no angle brackets).
 
 ## What an assistant does with it
 
