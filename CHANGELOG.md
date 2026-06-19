@@ -5,9 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-19
+
 ### Added
 - `--verify` flag for `gem skill install` and `bundle skill install`/`refresh` — runs a second LLM pass that checks the generated skill's code against the gem's **actual source code** (the source of truth) and corrects mismatched method signatures, default argument values, visibility, return values, and behavioral claims. READMEs and docstrings are frequently stale; this catches it.
 - `gem skill verify GEM_NAME [GEM_NAME ...]` subcommand — verify an already-cached skill in place (never generates; errors if the gem isn't installed or the skill isn't cached).
+- `gem skill list` flags verified versions with a green checkmark (`✓`); unverified versions show no mark. The checkmark is colored only for interactive terminals.
 - `GEMSKILL_PROJECT_DIR` env var (default `.claude/skills`) — controls the project-relative directory `bundle skill` writes symlinks into. Codex users can set it to `.agents` or `.codex` to link skills into a Codex project root.
 - `Gem::Skill::Verifier` — the verification pass. Whether the skill changed is decided by a deterministic diff (not the model's self-report), so the result is trustworthy.
 - `Fetcher#source_code` / `Fetcher#source_manifest` — concatenate the gem's `lib/**/*.rb` (size-capped) as ground truth, and report which files were examined.

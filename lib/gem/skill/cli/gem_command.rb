@@ -205,10 +205,31 @@ class Gem::Commands::SkillCommand < Gem::Command
     say ""
     gems.each do |name|
       versions = Gem::Skill::Cache.versions(name)
-      say "  %-30s %s" % [name, versions.join(", ")]
+      rendered = versions.map { |v| format_version(name, v) }.join(", ")
+      say "  %-30s %s" % [name, rendered]
     end
     say ""
     say "#{gems.size} gem(s), #{gems.sum { |n| Gem::Skill::Cache.versions(n).size }} version(s) total."
+  end
+
+  CHECK_MARK = "✓" # ✓
+
+  # True when the cached skill for this gem/version was verified against source.
+  def skill_verified?(gem_name, version)
+    Gem::Skill::Cache.read_metadata(gem_name, version).dig("verification", "verified") == true
+  end
+
+  # A version label, with a green checkmark appended when the skill is verified.
+  def format_version(gem_name, version)
+    return version unless skill_verified?(gem_name, version)
+
+    "#{version} #{colorize_check}"
+  end
+
+  # The checkmark, ANSI-green only when writing to an interactive terminal so
+  # redirected/piped output stays clean.
+  def colorize_check
+    $stdout.tty? ? "\e[32m#{CHECK_MARK}\e[0m" : CHECK_MARK
   end
 
   def cmd_setup

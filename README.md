@@ -143,7 +143,10 @@ gem skill install chunker-ruby --force
 # Use a different model
 gem skill install chunker-ruby --model claude-haiku-4-5
 
-# Show everything in the cache
+# Verify an already-cached skill against the gem's source (fixes mismatches)
+gem skill verify chunker-ruby
+
+# Show everything in the cache (verified versions are flagged with a ✓)
 gem skill list
 
 # Remove a specific cached version

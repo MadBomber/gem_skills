@@ -166,6 +166,41 @@ class GemCommandTest < Minitest::Test
     assert_match "2 version", @output.string
   end
 
+  def test_list_marks_verified_versions_with_checkmark
+    pre_cache("verified_gem", "1.0.0")
+    Gem::Skill::Cache.merge_metadata("verified_gem", "1.0.0", verification: { verified: true })
+    pre_cache("plain_gem", "2.0.0") # no verification metadata
+
+    @cmd.send(:cmd_list)
+    out  = @output.string
+    mark = Gem::Commands::SkillCommand::CHECK_MARK
+
+    assert_match "1.0.0 #{mark}", out, "verified version should get a checkmark"
+    refute_match "2.0.0 #{mark}", out, "unverified version should have no checkmark"
+  end
+
+  def test_skill_verified_predicate
+    pre_cache("g", "1.0.0")
+    refute @cmd.send(:skill_verified?, "g", "1.0.0")
+
+    Gem::Skill::Cache.merge_metadata("g", "1.0.0", verification: { verified: true })
+    assert @cmd.send(:skill_verified?, "g", "1.0.0")
+  end
+
+  def test_skill_verified_false_when_verification_skipped
+    pre_cache("g", "1.0.0")
+    Gem::Skill::Cache.merge_metadata("g", "1.0.0", verification: { verified: false })
+    refute @cmd.send(:skill_verified?, "g", "1.0.0")
+  end
+
+  def test_format_version_appends_check_only_when_verified
+    pre_cache("g", "1.0.0")
+    assert_equal "1.0.0", @cmd.send(:format_version, "g", "1.0.0")
+
+    Gem::Skill::Cache.merge_metadata("g", "1.0.0", verification: { verified: true })
+    assert_includes @cmd.send(:format_version, "g", "1.0.0"), Gem::Commands::SkillCommand::CHECK_MARK
+  end
+
   # --- cmd_purge ---
 
   def test_purge_shows_error_without_gem_name
