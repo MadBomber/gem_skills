@@ -163,13 +163,21 @@ If a gem isn't installed locally, `gem skill install` will install it first.
 
 ### `gem skill setup`
 
-Run once after `gem install gem-skill` to enable `bundle skill` globally:
+Run once after `gem install gem-skill`:
 
 ```bash
 gem skill setup
 ```
 
-This registers gem-skill as a Bundler plugin so `bundle skill` works in every project.
+This does two things:
+
+1. Registers gem-skill as a Bundler plugin so `bundle skill` works in every project.
+2. Installs the **`ruby-gem-skills`** router skill into the default skill root of
+   each detected assistant (`~/.claude/skills`, `~/.codex/skills`,
+   `~/.agents/skills`). Cached gem skills live in `~/.gem/skills`, which
+   assistants don't scan by default — this small always-on skill teaches Claude
+   Code and Codex how to find and load a gem's `SKILL.md` on demand. Re-run
+   `gem skill setup` after upgrading gem-skill to refresh it.
 
 ### `gem install --with-skill`
 

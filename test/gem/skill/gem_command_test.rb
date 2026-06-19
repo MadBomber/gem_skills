@@ -317,7 +317,70 @@ class GemCommandTest < Minitest::Test
     end
   end
 
+  # --- install_router_skill (gem skill setup) ---
+
+  def test_router_skill_template_exists_and_is_valid
+    source = File.join(Gem::Skill::ROUTER_SKILL_DIR, "SKILL.md")
+    assert File.exist?(source), "bundled router skill should exist at #{source}"
+    assert File.read(source).start_with?("---\n"), "router skill should have frontmatter"
+  end
+
+  def test_install_router_skill_copies_into_detected_assistant_roots
+    Dir.mktmpdir do |home|
+      with_env("HOME", home) do
+        FileUtils.mkdir_p(File.join(home, ".claude"))
+        FileUtils.mkdir_p(File.join(home, ".codex"))
+
+        @cmd.send(:install_router_skill)
+
+        %w[.claude .codex].each do |asst|
+          dest = File.join(home, asst, "skills", "ruby-gem-skills", "SKILL.md")
+          assert File.exist?(dest), "expected router skill at #{dest}"
+        end
+        # content matches the bundled template
+        src = File.read(File.join(Gem::Skill::ROUTER_SKILL_DIR, "SKILL.md"))
+        assert_equal src, File.read(File.join(home, ".claude", "skills", "ruby-gem-skills", "SKILL.md"))
+      end
+    end
+  end
+
+  def test_install_router_skill_skips_undetected_assistants
+    Dir.mktmpdir do |home|
+      with_env("HOME", home) do
+        FileUtils.mkdir_p(File.join(home, ".claude")) # only Claude present
+
+        @cmd.send(:install_router_skill)
+
+        assert File.exist?(File.join(home, ".claude", "skills", "ruby-gem-skills", "SKILL.md"))
+        refute Dir.exist?(File.join(home, ".codex")),  "must not create an undetected assistant's home"
+        refute Dir.exist?(File.join(home, ".agents")), "must not create an undetected assistant's home"
+      end
+    end
+  end
+
+  def test_install_router_skill_reports_when_none_detected
+    Dir.mktmpdir do |home|
+      with_env("HOME", home) do
+        @cmd.send(:install_router_skill)
+        assert_match "No assistant directories detected", @output.string
+        refute Dir.exist?(File.join(home, ".claude"))
+      end
+    end
+  end
+
   private
+
+  def with_env(key, value)
+    original = ENV[key]
+    ENV[key] = value
+    yield
+  ensure
+    if original.nil?
+      ENV.delete(key)
+    else
+      ENV[key] = original
+    end
+  end
 
   def set_args(*args)
     @cmd.instance_variable_get(:@options)[:args] = args

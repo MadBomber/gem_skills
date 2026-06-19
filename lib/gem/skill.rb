@@ -17,6 +17,12 @@ module Gem::Skill
   # skill (grep-style: 0 = clean, 1 = error, 2 = verify applied fixes).
   EXIT_VERIFY_FIXED = 2
 
+  # The bundled "router" skill that teaches assistants how to find cached gem
+  # skills in ~/.gem/skills. `gem skill setup` copies it into the assistants'
+  # default skill roots. Lives at the repo/gem root, beside README/CHANGELOG.
+  ROUTER_SKILL_NAME = "ruby-gem-skills"
+  ROUTER_SKILL_DIR  = File.expand_path("../../#{ROUTER_SKILL_NAME}", __dir__)
+
   ENV_KEY_MAP = {
     anthropic_api_key:  "ANTHROPIC_API_KEY",
     openai_api_key:     "OPENAI_API_KEY",

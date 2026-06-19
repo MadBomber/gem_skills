@@ -232,11 +232,24 @@ class Gem::Commands::SkillCommand < Gem::Command
     $stdout.tty? ? "\e[32m#{CHECK_MARK}\e[0m" : CHECK_MARK
   end
 
+  # Default skill roots that assistants scan automatically. The router skill is
+  # copied into each one whose assistant home directory already exists.
+  ASSISTANT_SKILL_ROOTS = {
+    "Claude Code" => "~/.claude/skills",
+    "OpenAI Codex" => "~/.codex/skills",
+    "Agents (vendor-neutral)" => "~/.agents/skills"
+  }.freeze
+
   def cmd_setup
+    register_bundler_plugin
+    say ""
+    install_router_skill
+  end
+
+  def register_bundler_plugin
     plugin_list = `bundle plugin list 2>/dev/null`
     if plugin_list.include?("gem-skill")
       say "gem-skill is already registered as a Bundler plugin."
-      say "Use 'bundle skill install' in any project."
       return
     end
 
@@ -246,6 +259,36 @@ class Gem::Commands::SkillCommand < Gem::Command
     else
       alert_error "Failed. Try running manually: bundle plugin install gem-skill"
     end
+  end
+
+  # Copy the bundled '#{Gem::Skill::ROUTER_SKILL_NAME}' skill into the default
+  # skill root of each detected assistant, so it can discover cached gem skills.
+  def install_router_skill
+    source = File.join(Gem::Skill::ROUTER_SKILL_DIR, "SKILL.md")
+    unless File.exist?(source)
+      alert_error "Router skill not found at #{source}"
+      return
+    end
+
+    say "Installing the '#{Gem::Skill::ROUTER_SKILL_NAME}' skill so assistants can find cached gem skills:"
+    installed = 0
+    ASSISTANT_SKILL_ROOTS.each do |label, root|
+      base = File.expand_path(root)
+      unless Dir.exist?(File.dirname(base))
+        say "  - #{label}: not detected — skipped"
+        next
+      end
+
+      dest_dir = File.join(base, Gem::Skill::ROUTER_SKILL_NAME)
+      FileUtils.mkdir_p(dest_dir)
+      FileUtils.cp(source, File.join(dest_dir, "SKILL.md"))
+      say "  - #{label}: installed -> #{dest_dir.sub(Dir.home, '~')}"
+      installed += 1
+    end
+
+    return unless installed.zero?
+
+    say "  No assistant directories detected. Create ~/.claude or ~/.codex, then re-run 'gem skill setup'."
   end
 
   def cmd_purge

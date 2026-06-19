@@ -119,14 +119,27 @@ All gems are processed concurrently — you'll see a live spinner per gem:
 
 ### `gem skill setup`
 
-Register gem-skill as a Bundler plugin (run once after `gem install gem-skill`).
+Run once after `gem install gem-skill`.
 
 ```bash
 gem skill setup
 ```
 
-This enables `bundle skill` in any project on the machine. See
-[Installation](../installation.md) for details.
+It does two things:
+
+1. **Registers gem-skill as a Bundler plugin** so `bundle skill` works in any
+   project on the machine.
+2. **Installs the `ruby-gem-skills` router skill** into the default skill root of
+   each detected assistant — `~/.claude/skills` (Claude Code), `~/.codex/skills`
+   and `~/.agents/skills` (Codex). A root is only written if its assistant home
+   (`~/.claude`, `~/.codex`, `~/.agents`) already exists.
+
+The router skill matters because cached gem skills live in `~/.gem/skills`, a
+directory assistants don't scan by default. This small always-on skill triggers
+when you work with a Ruby gem and tells the assistant how to find and read that
+gem's cached `SKILL.md` (resolving the version from `Gemfile.lock` or the
+installed gem). Re-run `gem skill setup` after upgrading gem-skill to refresh the
+copy. See [Installation](../installation.md) for details.
 
 ---
 
