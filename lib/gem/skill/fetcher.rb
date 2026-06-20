@@ -64,17 +64,6 @@ module Gem::Skill
       source_bundle&.fetch(:code)
     end
 
-    # Provenance for the source that source_code returned: which files were
-    # included, the total size, and whether the SOURCE_MAX_CHARS cap truncated
-    # the set. Returns nil when no source was available. Recorded in metadata so
-    # a verification result can be traced back to exactly what was examined.
-    def source_manifest
-      bundle = source_bundle
-      return nil unless bundle
-
-      { files: bundle[:files], chars: bundle[:chars], truncated: bundle[:truncated] }
-    end
-
     private
 
     def source_bundle

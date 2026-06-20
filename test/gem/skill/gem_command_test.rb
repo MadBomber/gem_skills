@@ -285,8 +285,7 @@ class GemCommandTest < Minitest::Test
   def test_verify_one_verifies_cached_skill_in_place
     pre_cache("my_gem", "1.0.0")
     fixed = Gem::Skill::Verifier::Result.new(
-      content: "# corrected", changes: [{ "category" => "signature" }],
-      changed: true, verifiable: true, source: { files: ["lib/x.rb"], chars: 10, truncated: false }, model: "m"
+      content: "# corrected", changed: true, verifiable: true, model: "m"
     )
     @cmd.stub(:resolve_installed_version, "1.0.0") do
       stub_linker do
@@ -294,7 +293,7 @@ class GemCommandTest < Minitest::Test
           result = @cmd.send(:verify_one, "my_gem", spinner: fake_spinner, model: "m")
           assert result.verify_fixed
           assert_equal "# corrected", Gem::Skill::Cache.read("my_gem", "1.0.0")
-          assert Gem::Skill::Cache.read_metadata("my_gem", "1.0.0")["verification"]["used_source_code"]
+          assert Gem::Skill::Cache.read_metadata("my_gem", "1.0.0")["verification"]["fixed"]
         end
       end
     end
@@ -304,8 +303,7 @@ class GemCommandTest < Minitest::Test
     pre_cache("my_gem", "1.0.0")
     set_args("my_gem")
     fixed = Gem::Skill::Verifier::Result.new(
-      content: "# corrected", changes: [{ "category" => "signature" }],
-      changed: true, verifiable: true, source: nil, model: "m"
+      content: "# corrected", changed: true, verifiable: true, model: "m"
     )
     @cmd.stub(:resolve_installed_version, "1.0.0") do
       stub_linker do

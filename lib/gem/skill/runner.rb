@@ -8,14 +8,11 @@ module Gem::Skill
   module Runner
     # error:        nil on success, message string on failure
     # verify_fixed: true when --verify ran and corrected the skill
-    # change_count: number of itemized corrections (0 when none/not run)
-    Result = Data.define(:error, :verify_fixed, :change_count) do
+    Result = Data.define(:error, :verify_fixed) do
       def ok? = error.nil?
 
-      def self.failure(message) = new(error: message, verify_fixed: false, change_count: 0)
-      def self.success(verify_fixed: false, change_count: 0)
-        new(error: nil, verify_fixed: verify_fixed, change_count: change_count)
-      end
+      def self.failure(message) = new(error: message, verify_fixed: false)
+      def self.success(verify_fixed: false) = new(error: nil, verify_fixed: verify_fixed)
     end
 
     # Generate + cache + link one skill, optionally verifying it against source.
@@ -46,11 +43,10 @@ module Gem::Skill
 
       unless result.verifiable
         Cache.merge_metadata(gem_name, version, verification: {
-          verified:         false,
-          verified_at:      Time.now.iso8601,
-          model:            model,
-          used_source_code: false,
-          skipped_reason:   "no installed source available"
+          verified:       false,
+          verified_at:    Time.now.iso8601,
+          model:          model,
+          skipped_reason: "no installed source available"
         })
         spinner.success("#{status} (no source to verify)")
         return Result.success
@@ -60,9 +56,8 @@ module Gem::Skill
       Cache.merge_metadata(gem_name, version, verification: verification_metadata(result))
 
       if result.changed?
-        n = result.changes.size
-        spinner.success(n.positive? ? "verified — fixed #{n}" : "verified — fixed")
-        Result.success(verify_fixed: true, change_count: n)
+        spinner.success("verified — fixed")
+        Result.success(verify_fixed: true)
       else
         spinner.success("verified — ok")
         Result.success
@@ -73,28 +68,17 @@ module Gem::Skill
     end
     private_class_method :finalize
 
-    # Records that real source code was consulted, which files, and the
-    # structured (issue-ready) corrections that resulted.
+    # Records that the skill was verified against real source and whether that
+    # verification changed anything. Intentionally minimal — the itemized list of
+    # what changed is not retained.
     def self.verification_metadata(result)
       {
-        verified:         true,
-        verified_at:      Time.now.iso8601,
-        model:            result.model,
-        used_source_code: true,
-        source:           source_provenance(result.source),
-        fixed:            result.changed?,
-        change_count:     result.changes.size,
-        changes:          result.changes
+        verified:    true,
+        verified_at: Time.now.iso8601,
+        model:       result.model,
+        fixed:       result.changed?
       }
     end
     private_class_method :verification_metadata
-
-    def self.source_provenance(manifest)
-      return {} unless manifest
-
-      files = Array(manifest[:files])
-      { files: files, file_count: files.size, chars: manifest[:chars], truncated: manifest[:truncated] }
-    end
-    private_class_method :source_provenance
   end
 end

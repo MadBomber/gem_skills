@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "ruby_llm"
-require "json"
 
 module Gem::Skill
   # Second-pass quality gate for a generated SKILL.md.
@@ -14,17 +13,10 @@ module Gem::Skill
   #
   # Whether the skill actually changed is decided by a deterministic diff of the
   # content before and after, not by trusting the model's self-report, so callers
-  # can rely on #changed? for an exit code.
-  #
-  # Each correction is returned as a structured Hash (see CHANGE_KEYS) detailed
-  # enough to file a documentation issue against the gem.
+  # can rely on #changed? for an exit code and a "fixed" flag.
   class Verifier
     BEGIN_MARK = "===BEGIN SKILL==="
     END_MARK   = "===END SKILL==="
-
-    # The fields every change Hash carries. Designed to be issue-ready: who is
-    # wrong, where, what it said, what it should say, and the source proof.
-    CHANGE_KEYS = %w[category symbol skill_section source_location was now detail source_evidence].freeze
 
     SYSTEM_INSTRUCTIONS = <<~SYSTEM
       You verify a generated Claude Code SKILL.md for a Ruby gem against the gem's
@@ -49,24 +41,8 @@ module Gem::Skill
       Verify the SKILL.md below for "%<gem_name>s" v%<version>s against the gem's
       source code. Correct every claim the source contradicts.
 
-      Output EXACTLY these two parts and nothing else:
-
-      PART 1 — a line "CHANGES_JSON:" followed by a JSON array of the corrections
-      you made. Use [] if nothing was wrong. Each array element is an object with
-      these string keys:
-        - "category": one of "signature", "default_value", "visibility",
-          "return_value", "behavior", "naming", "removed_api", "other"
-        - "symbol": the affected API, e.g. "TTY::Spinner#stop" or "FOO_CONST"
-        - "skill_section": the SKILL.md section the error appeared in, e.g. "Core API"
-        - "source_location": the source file and (if known) line, e.g.
-          "lib/tty/spinner.rb:387"
-        - "was": the incorrect text exactly as it appeared in the SKILL.md
-        - "now": the corrected text
-        - "detail": one sentence a maintainer could read as a doc-bug report
-        - "source_evidence": the minimal source snippet that proves the correction
-
-      PART 2 — the full corrected SKILL.md in raw Markdown (even if unchanged),
-      wrapped exactly between these marker lines:
+      Output ONLY the full corrected SKILL.md in raw Markdown (even if you change
+      nothing), wrapped exactly between these marker lines and with no other text:
       %<begin_mark>s
       <corrected SKILL.md here>
       %<end_mark>s
@@ -85,12 +61,10 @@ module Gem::Skill
     PROMPT
 
     # content:    the (possibly corrected) skill markdown
-    # changes:    array of issue-ready change Hashes (see CHANGE_KEYS)
     # changed:    true iff content differs from the original (diff-based)
     # verifiable: false when no source was available to check against
-    # source:     provenance Hash from Fetcher#source_manifest (or nil)
     # model:      the model used for verification
-    Result = Data.define(:content, :changes, :changed, :verifiable, :source, :model) do
+    Result = Data.define(:content, :changed, :verifiable, :model) do
       def changed? = changed
     end
 
@@ -107,8 +81,7 @@ module Gem::Skill
       fetcher = Fetcher.new(gem_name, version)
       source  = fetcher.source_code
       if source.nil? || source.strip.empty?
-        return Result.new(content: skill_content, changes: [], changed: false,
-                          verifiable: false, source: nil, model: model)
+        return Result.new(content: skill_content, changed: false, verifiable: false, model: model)
       end
 
       raw       = build_chat.ask(format_prompt(skill_content, source)).content.to_s
@@ -117,10 +90,9 @@ module Gem::Skill
       original  = Frontmatter.build(gem_name, version, skill_content)
       corrected = Frontmatter.build(gem_name, version, extract_skill(raw, skill_content))
       changed   = normalize(corrected) != normalize(original)
-      changes   = changed ? changes_from(raw) : []
 
-      Result.new(content: (changed ? corrected : skill_content), changes: changes, changed: changed,
-                 verifiable: true, source: fetcher.source_manifest, model: model)
+      Result.new(content: (changed ? corrected : skill_content), changed: changed,
+                 verifiable: true, model: model)
     rescue RubyLLM::Error => e
       raise Error, e.message
     end
@@ -155,34 +127,6 @@ module Gem::Skill
 
       body = body.to_s.strip
       body.empty? ? fallback : body
-    end
-
-    # Parse the structured change list from the CHANGES_JSON section (everything
-    # before the BEGIN marker). Returns normalized Hashes. When the content
-    # changed but no parseable details were returned, emit one fallback entry so
-    # the change is never silently undocumented.
-    def changes_from(raw)
-      head    = raw.split(BEGIN_MARK, 2).first.to_s
-      array   = head[/\[.*\]/m]
-      parsed  = array ? JSON.parse(array) : []
-      changes = parsed.is_a?(Array) ? parsed.filter_map { |c| normalize_change(c) } : []
-      changes.empty? ? [unspecified_change] : changes
-    rescue JSON::ParserError
-      [unspecified_change]
-    end
-
-    def normalize_change(change)
-      return nil unless change.is_a?(Hash)
-
-      stringified = change.transform_keys(&:to_s)
-      CHANGE_KEYS.to_h { |key| [key, stringified[key].to_s] }
-    end
-
-    def unspecified_change
-      normalize_change(
-        "category" => "unspecified",
-        "detail"   => "The verifier corrected the skill against source but did not return itemized change details."
-      )
     end
 
     def normalize(text)

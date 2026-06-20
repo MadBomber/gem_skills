@@ -29,27 +29,12 @@ class RunnerTest < Minitest::Test
     end
   end
 
-  CHANGE = {
-    "category"        => "default_value",
-    "symbol"          => "TTY::Spinner#stop",
-    "skill_section"   => "Core API",
-    "source_location" => "lib/tty/spinner.rb:387",
-    "was"             => "stop(message = nil)",
-    "now"             => "stop(message = '')",
-    "detail"          => "Default argument is an empty string, not nil.",
-    "source_evidence" => "def stop(stop_message = '')"
-  }.freeze
-
-  MANIFEST = { files: ["lib/tty/spinner.rb", "lib/tty/spinner/multi.rb"], chars: 26_452, truncated: false }.freeze
-
-  def test_verify_applies_fixes_rewrites_cache_and_records_provenance
-    fixed = verifier_result(content: "new skill", changes: [CHANGE], changed: true,
-                            verifiable: true, source: MANIFEST, model: "verify-model")
+  def test_verify_applies_fixes_rewrites_cache_and_records_minimal_metadata
+    fixed = verifier_result(content: "new skill", changed: true, verifiable: true, model: "verify-model")
     stub_linker do
       stub_verifier(fixed) do
         result = install(verify: true)
         assert result.verify_fixed
-        assert_equal 1, result.change_count
         assert_equal "new skill", Gem::Skill::Cache.read(@gem_name, @version)
 
         meta = Gem::Skill::Cache.read_metadata(@gem_name, @version)
@@ -57,29 +42,20 @@ class RunnerTest < Minitest::Test
 
         v = meta["verification"]
         assert_equal true,  v["verified"]
-        assert_equal true,  v["used_source_code"]
         assert_equal true,  v["fixed"]
-        assert_equal 1,     v["change_count"]
         assert_equal "verify-model", v["model"]
         assert v["verified_at"]
 
-        # source provenance: which files were actually examined
-        assert_equal 2, v.dig("source", "file_count")
-        assert_equal MANIFEST[:files], v.dig("source", "files")
-        assert_equal false, v.dig("source", "truncated")
-
-        # issue-ready structured change
-        change = v["changes"].first
-        assert_equal CHANGE, change
-        assert_equal "TTY::Spinner#stop", change["symbol"]
-        assert_equal "lib/tty/spinner.rb:387", change["source_location"]
+        # the itemized "what/why" detail is intentionally NOT recorded anymore
+        refute v.key?("changes"),      "detailed changes should not be recorded"
+        refute v.key?("change_count"), "change count should not be recorded"
+        refute v.key?("source"),       "source provenance should not be recorded"
       end
     end
   end
 
-  def test_verify_clean_marks_verified_with_no_changes
-    clean = verifier_result(content: "old skill", changes: [], changed: false,
-                            verifiable: true, source: MANIFEST, model: "m")
+  def test_verify_clean_marks_verified_with_no_fix
+    clean = verifier_result(content: "old skill", changed: false, verifiable: true, model: "m")
     stub_linker do
       stub_verifier(clean) do
         result = install(verify: true)
@@ -88,17 +64,14 @@ class RunnerTest < Minitest::Test
 
         v = Gem::Skill::Cache.read_metadata(@gem_name, @version)["verification"]
         assert_equal true,  v["verified"]
-        assert_equal true,  v["used_source_code"]
         assert_equal false, v["fixed"]
-        assert_equal 0,     v["change_count"]
-        assert_empty v["changes"]
+        refute v.key?("changes")
       end
     end
   end
 
-  def test_verify_without_source_records_skip_and_no_source_use
-    no_source = verifier_result(content: "old skill", changes: [], changed: false,
-                                verifiable: false, source: nil, model: "m")
+  def test_verify_without_source_records_skip
+    no_source = verifier_result(content: "old skill", changed: false, verifiable: false, model: "m")
     stub_linker do
       stub_verifier(no_source) do
         result = install(verify: true)
@@ -106,7 +79,6 @@ class RunnerTest < Minitest::Test
 
         v = Gem::Skill::Cache.read_metadata(@gem_name, @version)["verification"]
         assert_equal false, v["verified"]
-        assert_equal false, v["used_source_code"]
         assert_equal "no installed source available", v["skipped_reason"]
       end
     end
