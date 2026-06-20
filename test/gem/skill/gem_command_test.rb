@@ -175,7 +175,10 @@ class GemCommandTest < Minitest::Test
     out  = @output.string
     mark = Gem::Commands::SkillCommand::CHECK_MARK
 
-    assert_match "1.0.0 #{mark}", out, "verified version should get a checkmark"
+    # The checkmark is ANSI-colored on an interactive terminal, so allow optional
+    # SGR codes between the version and the mark.
+    verified = /1\.0\.0 (?:\e\[\d+m)*#{Regexp.escape(mark)}/
+    assert_match verified, out, "verified version should get a checkmark"
     refute_match "2.0.0 #{mark}", out, "unverified version should have no checkmark"
   end
 
