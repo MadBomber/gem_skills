@@ -1097,6 +1097,14 @@ It works with any installed gem regardless of project context.</p>
 <td>LLM model to use (overrides <code>GEMSKILL_MODEL</code>)</td>
 </tr>
 <tr>
+<td><code>--max-tokens TOKENS</code></td>
+<td>Max output tokens for this run (overrides <code>GEMSKIL_MAX_TOKENS</code>; default: 32767)</td>
+</tr>
+<tr>
+<td><code>--temperature TEMP</code></td>
+<td>Sampling temperature, skipped by reasoning models (overrides <code>GEMSKILL_TEMPERATURE</code>; default: 0.2)</td>
+</tr>
+<tr>
 <td><code>--version</code>, <code>-v</code></td>
 <td>Print the installed gem-skill version and exit</td>
 </tr>
@@ -1114,6 +1122,12 @@ It works with any installed gem regardless of project context.</p>
 </span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
 </span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># Generate, then verify the result against the gem&#39;s source code</span>
 </span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>tty-spinner<span class="w"> </span>--verify
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># Raise the token cap to avoid truncated output</span>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>rails<span class="w"> </span>--max-tokens<span class="w"> </span><span class="m">65536</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="c1"># Lower the temperature for more reproducible output (temperature-capable models)</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>gem<span class="w"> </span>skill<span class="w"> </span>install<span class="w"> </span>faraday<span class="w"> </span>--model<span class="w"> </span>claude-sonnet-4-6<span class="w"> </span>--temperature<span class="w"> </span><span class="m">0</span>.0
 </span></code></pre></div>
 <p>If a gem is not installed locally, gem-skill will install it automatically
 before generating the skill.</p>
