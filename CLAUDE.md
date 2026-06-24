@@ -44,6 +44,7 @@ bundle exec ruby bin/e2e_test [GEM VERSION MODEL]  # live LLM end-to-end test
 - `Cache::ROOT` = `~/.gem/skills`
 - `Generator::DEFAULT_MODEL` = `"claude-sonnet-4-6"`
 - `Generator::MAX_TOKENS` = 32,767 (override via `GEMSKIL_MAX_TOKENS` env var)
+- `Generator::DEFAULT_TEMPERATURE` = 0.2 (override via `GEMSKILL_TEMPERATURE` env var; skipped for models that reject temperature)
 - `Generator::MAX_SOURCE_CHARS` = 60,000 (README truncation guard)
 - Symlink location per project: `.claude/skills/<gem_name>.md → ~/.gem/skills/<gem_name>/<version>/SKILL.md`
 

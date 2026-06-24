@@ -84,6 +84,20 @@ Increase this if generated `SKILL.md` files are being truncated.
 | **Default** | `32767` |
 | **Example** | `export GEMSKIL_MAX_TOKENS=65536` |
 
+### `GEMSKILL_TEMPERATURE`
+
+Sampling temperature for generation. Lower values produce more consistent,
+deterministic output — appropriate for factual reference documentation.
+
+| | |
+|---|---|
+| **Default** | `0.2` |
+| **Example** | `export GEMSKILL_TEMPERATURE=0.0` |
+
+Only applied to models that support a temperature parameter. Reasoning models
+(e.g. `gpt-5.5`) reject it, so the value is silently skipped for them — switch to
+a temperature-supporting model (Claude, Gemini, older GPT) to benefit.
+
 ### `GEMSKILL_MODEL`
 
 Controls which LLM model is used when generating skills.

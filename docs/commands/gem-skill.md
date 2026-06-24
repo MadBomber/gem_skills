@@ -21,6 +21,7 @@ gem skill install GEM_NAME [GEM_NAME ...]
 | `--verify` | After generating, verify the skill's code against the gem's actual source and fix mismatches |
 | `--model MODEL`, `-m MODEL` | LLM model to use (overrides `GEMSKILL_MODEL`) |
 | `--max-tokens TOKENS` | Max output tokens for this run (overrides `GEMSKIL_MAX_TOKENS`; default: 32767) |
+| `--temperature TEMP` | Sampling temperature, skipped by reasoning models (overrides `GEMSKILL_TEMPERATURE`; default: 0.2) |
 | `--version`, `-v` | Print the installed gem-skill version and exit |
 
 **Examples:**
@@ -40,6 +41,9 @@ gem skill install tty-spinner --verify
 
 # Raise the token cap to avoid truncated output
 gem skill install rails --max-tokens 65536
+
+# Lower the temperature for more reproducible output (temperature-capable models)
+gem skill install faraday --model claude-sonnet-4-6 --temperature 0.0
 ```
 
 If a gem is not installed locally, gem-skill will install it automatically

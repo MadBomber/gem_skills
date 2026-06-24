@@ -100,6 +100,22 @@ class RunnerTest < Minitest::Test
     assert_equal 65_536, captured[:max_tokens]
   end
 
+  def test_temperature_forwarded_to_generator
+    Gem::Skill::Cache.purge(@gem_name, @version)
+    captured = {}
+    gen_obj  = Object.new
+    gen_obj.define_singleton_method(:generate) { |**| "# skill" }
+
+    stub_linker do
+      Gem::Skill::Generator.stub(:new, ->(*args, **kwargs) { captured.merge!(kwargs); gen_obj }) do
+        Gem::Skill::Runner.install_skill(@gem_name, @version, fake_spinner,
+                                        force: false, model: "m", temperature: 0.5)
+      end
+    end
+
+    assert_equal 0.5, captured[:temperature]
+  end
+
   def test_returns_failure_when_generation_raises
     # Force the uncached/generate path and make generation blow up
     Gem::Skill::Cache.purge(@gem_name, @version)

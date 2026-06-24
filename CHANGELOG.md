@@ -9,17 +9,20 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Bundled `ruby-gem-skills` "router" skill (shipped at the gem root) that teaches assistants how to find cached gem skills in `~/.gem/skills` — a directory neither Claude Code nor Codex scans by default. `gem skill setup` now also copies this skill into each detected assistant's default root (`~/.claude/skills`, `~/.codex/skills`, `~/.agents/skills`), creating none that don't already exist. `Gem::Skill::ROUTER_SKILL_NAME` / `ROUTER_SKILL_DIR` locate the bundled template.
 - `GEMSKIL_MAX_TOKENS` environment variable (default `32767`) — caps the number of output tokens the LLM may generate per skill file. Raise this if generated `SKILL.md` files are being truncated.
 - `--max-tokens TOKENS` CLI flag on `gem skill install`, `bundle skill install`, and `bundle skill refresh` — overrides `GEMSKIL_MAX_TOKENS` for a single invocation. Provider-correct parameter name is selected automatically (`max_completion_tokens` for OpenAI models, `max_tokens` for all others).
+- `GEMSKILL_TEMPERATURE` environment variable (default `0.2`) — sampling temperature for generation. Lower values produce more consistent, less variable output, appropriate for factual reference docs. Applied only to models that support a temperature parameter; reasoning models (e.g. `gpt-5.5`) report `temperature: false` in their RubyLLM metadata and the value is silently skipped for them.
+- `--temperature TEMP` CLI flag on `gem skill install` — overrides `GEMSKILL_TEMPERATURE` for a single invocation.
 
 ### Fixed
 - `strip_wrapper_fence` no longer deletes the closing ``` of a skill that legitimately ends with a code block. The trailing wrapper fence is now stripped only when a matching opening wrapper fence (```` ```markdown ```` / ```` ``` ```` at the very start) was present. Previously the final ``` was removed unconditionally, leaving the last code block open at end-of-file — which looked like the LLM truncating its output but was entirely a post-processing bug. Regenerate affected skills with `gem skill install GEM --force`.
 
 ### Changed
 - `Generator::MAX_TOKENS` constant reads from `GEMSKIL_MAX_TOKENS` and is passed via `with_params` to every `RubyLLM.chat` call, covering both streaming and non-streaming paths.
-- `Generator#initialize` now accepts a `max_tokens:` keyword so callers can override the token cap per-instance without touching the environment.
-- `Runner.install_skill` accepts and forwards `max_tokens:` to `Generator.new`.
+- `Generator#initialize` now accepts `max_tokens:` and `temperature:` keywords so callers can override the token cap and sampling temperature per-instance without touching the environment.
+- `Generator` sets `with_temperature` only when the model's RubyLLM metadata does not mark temperature unsupported, avoiding API errors on reasoning models.
+- `Runner.install_skill` accepts and forwards `max_tokens:` and `temperature:` to `Generator.new`.
 - `README.md` Configuration section now lists all environment variables (gem-skill-specific and provider API keys) in a single reference table.
-- `docs/configuration.md` documents the new `GEMSKIL_MAX_TOKENS` variable alongside the existing `GEMSKILL_MODEL` entry.
-- `docs/commands/gem-skill.md` and `docs/commands/bundle-skill.md` option tables updated with `--max-tokens`.
+- `docs/configuration.md` documents the new `GEMSKIL_MAX_TOKENS` and `GEMSKILL_TEMPERATURE` variables alongside the existing `GEMSKILL_MODEL` entry.
+- `docs/commands/gem-skill.md` and `docs/commands/bundle-skill.md` option tables updated with `--max-tokens` and `--temperature`.
 
 ## [0.2.0] - 2026-06-19
 

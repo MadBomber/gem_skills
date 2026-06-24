@@ -5,9 +5,10 @@ require "ruby_llm"
 module Gem::Skill
   # Drives the LLM pipeline: fetches docs, generates a SKILL.md, caches it.
   class Generator
-    DEFAULT_MODEL  = ENV.fetch("GEMSKILL_MODEL", "gpt-5.5")
-    MAX_TOKENS     = ENV.fetch("GEMSKIL_MAX_TOKENS", 32_767).to_i
-    MAX_SOURCE_CHARS = 60_000  # guard against enormous READMEs blowing the context window
+    DEFAULT_MODEL       = ENV.fetch("GEMSKILL_MODEL", "gpt-5.5")
+    MAX_TOKENS          = ENV.fetch("GEMSKIL_MAX_TOKENS", 32_767).to_i
+    DEFAULT_TEMPERATURE = ENV.fetch("GEMSKILL_TEMPERATURE", 0.2).to_f
+    MAX_SOURCE_CHARS    = 60_000  # guard against enormous READMEs blowing the context window
 
     SYSTEM_INSTRUCTIONS = <<~SYSTEM
       You are a Ruby gem documentation specialist who generates Claude Code skill files.
@@ -57,13 +58,14 @@ module Gem::Skill
       %<sources>s
     PROMPT
 
-    attr_reader :gem_name, :version, :model, :max_tokens
+    attr_reader :gem_name, :version, :model, :max_tokens, :temperature
 
-    def initialize(gem_name, version, model: DEFAULT_MODEL, max_tokens: MAX_TOKENS)
-      @gem_name   = gem_name
-      @version    = version
-      @model      = model
-      @max_tokens = max_tokens
+    def initialize(gem_name, version, model: DEFAULT_MODEL, max_tokens: MAX_TOKENS, temperature: DEFAULT_TEMPERATURE)
+      @gem_name    = gem_name
+      @version     = version
+      @model       = model
+      @max_tokens  = max_tokens
+      @temperature = temperature
     end
 
     # Generate and cache a SKILL.md. Returns the skill content string.
@@ -120,14 +122,26 @@ module Gem::Skill
     end
 
     def build_chat
-      RubyLLM.chat(model: model)
-              .with_params(max_tokens_param => @max_tokens)
-              .with_instructions(SYSTEM_INSTRUCTIONS)
+      chat = RubyLLM.chat(model: model).with_params(max_tokens_param => @max_tokens)
+      chat = chat.with_temperature(@temperature) if temperature_supported?
+      chat.with_instructions(SYSTEM_INSTRUCTIONS)
+    end
+
+    def model_info
+      @model_info ||= RubyLLM.models.find(model)
     end
 
     def max_tokens_param
-      info = RubyLLM.models.find(model)
-      info&.provider == "openai" ? :max_completion_tokens : :max_tokens
+      model_info&.provider == "openai" ? :max_completion_tokens : :max_tokens
+    end
+
+    # Reasoning models (e.g. gpt-5.5) reject a temperature parameter outright.
+    # Only set it for models whose metadata doesn't explicitly mark temperature
+    # unsupported; treat absent metadata as supported.
+    def temperature_supported?
+      return false if @temperature.nil?
+
+      model_info.metadata.fetch(:temperature, true) != false
     end
 
     def format_prompt(sources)

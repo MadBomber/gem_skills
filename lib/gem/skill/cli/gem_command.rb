@@ -22,6 +22,9 @@ class Gem::Commands::SkillCommand < Gem::Command
     add_option("--max-tokens TOKENS",   "Max output tokens (overrides GEMSKIL_MAX_TOKENS; default: #{Gem::Skill::Generator::MAX_TOKENS})") do |tokens, o|
       o[:max_tokens] = tokens.to_i
     end
+    add_option("--temperature TEMP",    "Sampling temperature; ignored by reasoning models (overrides GEMSKILL_TEMPERATURE; default: #{Gem::Skill::Generator::DEFAULT_TEMPERATURE})") do |temp, o|
+      o[:temperature] = temp.to_f
+    end
     add_option("-v", "--version",       "Print gem-skill version and exit") { |_, o| o[:version] = true }
   end
 
@@ -83,10 +86,11 @@ class Gem::Commands::SkillCommand < Gem::Command
       return
     end
 
-    force      = options[:force]
-    verify     = options[:verify]
-    model      = options[:model] || Gem::Skill::Generator::DEFAULT_MODEL
-    max_tokens = options[:max_tokens] || Gem::Skill::Generator::MAX_TOKENS
+    force       = options[:force]
+    verify      = options[:verify]
+    model       = options[:model] || Gem::Skill::Generator::DEFAULT_MODEL
+    max_tokens  = options[:max_tokens] || Gem::Skill::Generator::MAX_TOKENS
+    temperature = options[:temperature] || Gem::Skill::Generator::DEFAULT_TEMPERATURE
 
     multi = TTY::Spinner::Multi.new(
       "[:spinner] Generating skills (#{model})",
@@ -100,7 +104,7 @@ class Gem::Commands::SkillCommand < Gem::Command
       gem_names.each do |gem_name|
         spinner = multi.register("  [:spinner] :title")
         spinner.update(title: gem_name)
-        barrier.async { results << install_one(gem_name, spinner: spinner, force: force, model: model, verify: verify, max_tokens: max_tokens) }
+        barrier.async { results << install_one(gem_name, spinner: spinner, force: force, model: model, verify: verify, max_tokens: max_tokens, temperature: temperature) }
       end
       barrier.wait
     ensure
@@ -116,7 +120,7 @@ class Gem::Commands::SkillCommand < Gem::Command
     end
   end
 
-  def install_one(gem_name, spinner:, force:, model:, verify: false, max_tokens: Gem::Skill::Generator::MAX_TOKENS)
+  def install_one(gem_name, spinner:, force:, model:, verify: false, max_tokens: Gem::Skill::Generator::MAX_TOKENS, temperature: Gem::Skill::Generator::DEFAULT_TEMPERATURE)
     spinner.auto_spin
     version = resolve_installed_version(gem_name)
     if version.nil?
@@ -124,7 +128,7 @@ class Gem::Commands::SkillCommand < Gem::Command
       version = install_gem(gem_name)
     end
     spinner.update(title: "#{gem_name} #{version}")
-    result = Gem::Skill::Runner.install_skill(gem_name, version, spinner, force: force, model: model, verify: verify, max_tokens: max_tokens)
+    result = Gem::Skill::Runner.install_skill(gem_name, version, spinner, force: force, model: model, verify: verify, max_tokens: max_tokens, temperature: temperature)
     alert_error "#{gem_name}: #{result.error}" if result.error
     result
   rescue Gem::Skill::Error => e

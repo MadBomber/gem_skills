@@ -175,6 +175,41 @@ class GeneratorTest < Minitest::Test
     assert_equal Gem::Skill::Generator::MAX_TOKENS, gen.max_tokens
   end
 
+  def test_default_temperature_equals_constant
+    gen = Gem::Skill::Generator.new(@gem_name, @version)
+    assert_equal Gem::Skill::Generator::DEFAULT_TEMPERATURE, gen.temperature
+  end
+
+  def test_temperature_applied_for_supporting_model
+    captured_temp = nil
+    fake_chat     = responding_chat(FAKE_SKILL)
+    fake_chat.define_singleton_method(:with_temperature) { |t| captured_temp = t; self }
+
+    Gem::Skill::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
+      RubyLLM.stub(:chat, fake_chat) do
+        # claude models report temperature: true in their RubyLLM metadata
+        Gem::Skill::Generator.new(@gem_name, @version, model: "claude-haiku-4-5", temperature: 0.4).generate
+      end
+    end
+
+    assert_equal 0.4, captured_temp
+  end
+
+  def test_temperature_skipped_for_reasoning_model
+    temperature_called = false
+    fake_chat          = responding_chat(FAKE_SKILL)
+    fake_chat.define_singleton_method(:with_temperature) { |_| temperature_called = true; self }
+
+    Gem::Skill::Fetcher.stub(:new, fake_fetcher(FAKE_SOURCES)) do
+      RubyLLM.stub(:chat, fake_chat) do
+        # gpt-5.5 reports temperature: false — the param must not be sent
+        Gem::Skill::Generator.new(@gem_name, @version, model: "gpt-5.5", temperature: 0.4).generate
+      end
+    end
+
+    refute temperature_called, "temperature must not be set for a reasoning model"
+  end
+
   private
 
   def with_stubs(sources:, skill:)
@@ -195,6 +230,7 @@ class GeneratorTest < Minitest::Test
   def responding_chat(content)
     chat = Object.new
     chat.define_singleton_method(:with_params)       { |**| self }
+    chat.define_singleton_method(:with_temperature)  { |_| self }
     chat.define_singleton_method(:with_instructions) { |_| self }
     chat.define_singleton_method(:ask) { |_| FakeResponse.new(content) }
     chat
@@ -203,6 +239,7 @@ class GeneratorTest < Minitest::Test
   def streaming_chat(chunks)
     chat = Object.new
     chat.define_singleton_method(:with_params)       { |**| self }
+    chat.define_singleton_method(:with_temperature)  { |_| self }
     chat.define_singleton_method(:with_instructions) { |_| self }
     chat.define_singleton_method(:ask) do |_, &blk|
       chunks.each { |c| blk&.call(FakeResponse.new(c)) }
